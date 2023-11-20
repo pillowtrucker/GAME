@@ -1,38 +1,61 @@
-* Goal
-This will be a manifesto
+* Why
+This will be a manifesto. I want to tell many stories.
 * What
-For now, this will be the graphical and (G)UI engine part of [[https://github.com/pillowtrucker/hstherac25][hstherac25]]. Ultimately, it shall be the demo/prologue of a much longer story.
+For now, this will be the graphical and (G)UI engine part of [[https://github.com/pillowtrucker/hstherac25][hstherac25]]. Ultimately, it shall become the demo/prologue of a much longer story.
+I want to write down the ideas for scenarios that I have, but I think writing the source code/script for them would be basically the same thing that I'd be doing a second time then..
+They are mostly horrible stories of awful stuff that the NATO society wants to keep hidden. The real cost of your car and of your computer and your consumerism in general. The cost of making it optional and often aspirational to have food and shelter for the less forunate than you.
 * Why not
 ** Unreal Engine
   - Developing the UI in Unreal Editor is soul-crushing, and trying to do it in C++ results in 15 consecutive editor crashes every time the library is recompiled.
+    I would probably have better luck on Windows but I don't want to.
   - I want more control over the engine than I can have in UE (without recompiling a 50GB cosmic horror blob - thanks)
-  - Hardware requirements of UE are really annoying even on a top shelf laptop and then all of the games look the same because of their shaders and lighting.
-  - I like how Tim is working with SPJ, but he (Tim) is still has evil MBA egomaniac vibes in every walk of life other than his PL hobby.
+  - Hardware requirements of UE are really annoying even on a top shelf laptop and then all of the games look the same because of their shaders, postprocessing and lighting.
+  - I like how Tim is working with SPJ, but he (Tim) is still has evil MBA egomaniac vibes in every walk of life other than his PL hobby and programming passion.
 ** Godot ?
-I've been waiting for him, he'll be ready any minute now
+- I've been waiting for him, he'll be ready any minute now...
+- Maybe if they hadn't fucked up bindings to other languages with 4.x, I would have stopped for longer to consider it, but they've made their choice.
+- Nota bene: their entire showcase of "games made with the engine" is 2d scribbles of babies that look somehow less appealing than Ludum Dare games, or even the Google Scratch hall of fame.
 ** everything in haskell ?
 That's how you waste several months of your life snorkeling in a septic tank. In other words - the tools and the ecosystem just aren't there.
+The /haskell-game/ guys have done some pretty good work, but it's still basically DOA. There is /one/ decent haskell game on Steam and it looks like the guy paid for it with his sanity.
 ** a MUD or text adventure
-  - LPC is an awful platform to develop on, every (even modern/recent-ish) example is broken and only (barely) works on the developer's computer.
+  - LPC is an awful platform to develop on, and a bad bad language. Every (even modern/recent-ish) example is broken and only (barely) works on the developer's computer.
   - Interactive Fiction has stagnated for decades, and I don't see any path towards it being expanded in any meaningful way.
-  - In an oversaturated video game market nobody plays those games. Not even people who like text interfaces and books.
-** Roguelike/RPGMaker game
-Tired old formula, both too competitive and dead at the same time.
-** Rust
+    It would be super useful to have all that ontology, English grammar and parsing work already done, but it's done in inform7, which is COBOL for English Literature majors.
+    The other languages and authoring systems for IF share most of inform's downsides with none of its advantages.
+  - In an oversaturated video game market nobody plays those games. Not even people who like text interfaces and books. (including myself in that last group). It's an esoteric cult following now.
+** a Roguelike/RPGMaker game ?
+Tired old formula, both too competitive and dead at the same time. I guess it would be a good vehicle for a story but the presentation would make it very unlikely anyone ever read it.
+** Rust ?
   - Tedious.
   - The security guarantees do nothing for a single-player game.
   - Libraries and tooling are often written by a guy who just learned programming last weekend and thinks .clone()ing an entire gigantic binary LDAP tree is a good idea.
   - The community is 90% people who used to write javascript and, when they followed a rust tutorial and finally managed to Compile their first Programme, they decided rust is the best language there is.
-** Unity
+
+** Raylib/C in general ?
+  - Try making anything in that that's not a pointless variant of some trivial game that's just there to show ``I can make a tetris!", "I am a hipster!", or "I am employable as a toy maker" and with nothing else to say.
+  - if you want to /suckless/ try learning some abstractions to simplify your code (read a book)
+** Unity ?
 Go away
-** Raylib/C in general
-  - Try making anything in that that's not a pointless variant of some trivial game that's just there to show "I can make a tetris!" or "I am employable as a toy maker" and with nothing else to say.
-  - if you want to suckless try learning some abstractions to simplify your code
+** .NET
+I said: go away
+** other bad ideas I had already wasted a lot of time on in the last year?
+No
 * Then how ?
 ** Tech
   - initially, placing my bet on [[https://github.com/Siv3D][Siv3D]], mostly because with c++>=20 I can use wacky functional programming stuff and other gimmicks cribbed from ML
+    Update: This thing produces a 225MB hello world and still depends on 382 other libraries. But [[https://siv3d-for-kids.github.io/][the hypnotic CIA ray]] is telling me to double down.
   - since the above only supports .obj, I also need https://github.com/syoyo/tinygltf
-  - I really want to integrate a mini-ml or at least some lisp as the scripting language for the engine
+  - I really want to integrate a mini-ml or at least some lisp as the scripting language for the engine.
+    In the past I've looked into
+    - embedding haskell in haskell - works slowly with ghci, reckless and breaks in new ways with every single ghc update with the ghc api
+    - embedding husk-scheme in haskell - ok-ish but it lacks all the modern conveniences and abstractions
+    - embedding TCL in things - that works, but nobody wants to write TCL, because they are fools
+    - the way the guys at swarm-game made their own embedded mini-ml - this is very cool but I'm nowhere as smart as they are and forking their project to make my own game would also be very hard
+    - making my own Z-machine-style vm - it would have all the limitations of inform/interactive fiction in general. I am not good enough to make a much better one
+    - embedding my own Spineless-Tagless Graph-reducing-machine with a multithreaded concurrent runtime and STM - only SPJ knows how to do that. Also this is just making a game in haskell.
+    - embedding one of those strict ML machines - I might actually be capable of doing one of the earlier simpler ones but I don't know if it would be useful. (this is also basically what swarm-game guys are doing but a slightly different abstract machine)
+    - I think this + the other comments in this README is the entire list of things I've wasted time on this year. Other than the 777 hours of Elden Ring, of which I am only partially proud.
   - probably more, I gave lots of github stars to things I thought I could use
 ** TODOs for the near future
   1. Liberate the Therac UI control program (keyboard_handler) from Unreal.
