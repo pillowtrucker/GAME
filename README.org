@@ -1,0 +1,41 @@
+* Goal
+This will be a manifesto
+* What
+For now, this will be the graphical and (G)UI engine part of [[https://github.com/pillowtrucker/hstherac25][hstherac25]]. Ultimately, it shall be the demo/prologue of a much longer story.
+* Why not
+** Unreal Engine
+  - Developing the UI in Unreal Editor is soul-crushing, and trying to do it in C++ results in 15 consecutive editor crashes every time the library is recompiled.
+  - I want more control over the engine than I can have in UE (without recompiling a 50GB cosmic horror blob - thanks)
+  - Hardware requirements of UE are really annoying even on a top shelf laptop and then all of the games look the same because of their shaders and lighting.
+  - I like how Tim is working with SPJ, but he (Tim) is still has evil MBA egomaniac vibes in every walk of life other than his PL hobby.
+** Godot ?
+I've been waiting for him, he'll be ready any minute now
+** everything in haskell ?
+That's how you waste several months of your life snorkeling in a septic tank. In other words - the tools and the ecosystem just aren't there.
+** a MUD or text adventure
+  - LPC is an awful platform to develop on, every (even modern/recent-ish) example is broken and only (barely) works on the developer's computer.
+  - Interactive Fiction has stagnated for decades, and I don't see any path towards it being expanded in any meaningful way.
+  - In an oversaturated video game market nobody plays those games. Not even people who like text interfaces and books.
+** Roguelike/RPGMaker game
+Tired old formula, both too competitive and dead at the same time.
+** Rust
+  - Tedious.
+  - The security guarantees do nothing for a single-player game.
+  - Libraries and tooling are often written by a guy who just learned programming last weekend and thinks .clone()ing an entire gigantic binary LDAP tree is a good idea.
+  - The community is 90% people who used to write javascript and, when they followed a rust tutorial and finally managed to Compile their first Programme, they decided rust is the best language there is.
+** Unity
+Go away
+** Raylib/C in general
+  - Try making anything in that that's not a pointless variant of some trivial game that's just there to show "I can make a tetris!" or "I am employable as a toy maker" and with nothing else to say.
+  - if you want to suckless try learning some abstractions to simplify your code
+* Then how ?
+** Tech
+  - initially, placing my bet on [[https://github.com/Siv3D][Siv3D]], mostly because with c++>=20 I can use wacky functional programming stuff and other gimmicks cribbed from ML
+  - since the above only supports .obj, I also need https://github.com/syoyo/tinygltf
+  - I really want to integrate a mini-ml or at least some lisp as the scripting language for the engine
+  - probably more, I gave lots of github stars to things I thought I could use
+** TODOs for the near future
+  1. Liberate the Therac UI control program (keyboard_handler) from Unreal.
+  2. Set up a scene for the therac minigame using the meshes I had set up in UE
+  3. Integrate this into a larger game template/framework where it's easy to add data/scripts for dialogues, narration, scenes.
+  4. Expand beyond the mini-game
