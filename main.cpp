@@ -5,19 +5,25 @@ void Main()
 {
     auto main_monitor = System::GetCurrentMonitor();
     auto const mms = main_monitor.fullscreenResolution;
-    auto const font_size = 19;
+    auto const test_font_size = 100;
+    Font test_font{FontMethod::MSDF, test_font_size, U"resources/engine/font/hasklug/Hasklug.otf"};
+    auto test_font_px_width = test_font.getGlyphInfo(U"█").width;
+    String longest_column{U"COLLIMATOR ROTATION(DEG)"};
     ColorF color_black{0x00,0x00,0x00};
     ColorF color_green{0x00,0xff,0x00};
     double num_columns = 7;
-    auto longest_overhead = 22;
-    double column_width = Math::Floor(mms.x/num_columns + longest_overhead);
-    Font myMonoFont{FontMethod::MSDF, font_size, U"resources/engine/font/hasklug/Hasklug.otf"};
+    double column_width = Math::Floor(mms.x/num_columns);
+    auto pixel_budget = column_width/longest_column.length();
+    auto pixels_per_point = static_cast<double>(test_font_px_width)/test_font_size;
+    auto const font_size = Math::Floor(pixel_budget/pixels_per_point);
+    
+    Font myMonoFont{FontMethod::MSDF, static_cast<uint16_t>(font_size), U"resources/engine/font/hasklug/Hasklug.otf"};
     Array<double> columns_ = Array<double>(num_columns,column_width);
     SimpleTable grid
     {
         (Array<double> const &) columns_,
         {
-            .borderThickness = 0, .backgroundColor = color_black,.textColor = color_green, .variableWidth = true, .font = myMonoFont, .fontSize = font_size
+            .borderThickness = 0, .backgroundColor = color_black,.textColor = color_green, .variableWidth = false, .font = myMonoFont, .fontSize = font_size
         }
     };
     int32 fps;
@@ -56,10 +62,15 @@ void Main()
     grid_labels.each([&grid] (auto row){
         grid.push_back_row(row);
     });
-    /* calculate longest_overhead at given font size
     auto actual_width = grid.width();
     Console << actual_width;
-    */
+    grid.items().each_index([](auto i, auto v)
+    {
+        if(v.text.starts_with(U"PLACEHOLDER"))
+        { 
+            //v.textWidth;
+        }
+    });
 	while (System::Update())
 	{
 		// 1 秒間に何回メインループが実行されているかを取得する
