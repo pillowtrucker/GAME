@@ -3,7 +3,8 @@ project(GAME)
 
 # this is way easier than finding the 382 deps found by ldd
 find_package(Siv3D)
-
+#configure_file(resources resources COPYONLY)
+file(COPY resources DESTINATION ${CMAKE_BINARY_DIR})
 #target_compile_features(Siv3DTest PRIVATE cxx_std_20)
 #add_library(libSiv3D STATIC IMPORTED)
 #set_target_properties(libSiv3D PROPERTIES IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/OpenSiv3D/Linux/build/libSiv3D.a")
