@@ -17,6 +17,23 @@ namespace mine {
 namespace UnfriendlyTextBox
 
 {
+enum TheracTextType
+{
+    FloatSrc,
+    FloatDest,
+    Int,
+    SingleChar,
+    Verifier,
+    Date,
+    Time,
+    Operator,
+    TreatPhase,
+    BeamMode,
+    BeamEnergy,
+    CommandEntry,
+    Const,
+    Normal
+};
 
 /// @brief テキストボックスを表示します。
 /// @param text テキストボックスの状態への参照

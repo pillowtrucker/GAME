@@ -1,5 +1,8 @@
 #include "UnfriendlyTextBox.h"
 #include "Siv3D.hpp"
+#include <Siv3D/TextInput.hpp>
+#include "OpenSiv3D/Siv3D/src/Siv3D/Common/Siv3DEngine.hpp"
+#include "OpenSiv3D/Siv3D/src/Siv3D/TextInput/ITextInput.hpp"
 namespace mine {
 namespace UnfriendlyTextBox {
 constexpr double MinTextBoxWidth = 40.0;
@@ -14,6 +17,51 @@ inline constexpr ColorF GetTextColor(bool enabled) noexcept
     return (enabled ? ActiveTextColor : DisabledTextColor);
 }
 
+struct TheracStateVerifier;
+struct TheracStateFloatDest;
+struct TheracTextState
+{
+    TheracTextType text_field_type;
+    std::optional<std::variant<TheracStateVerifier*,TheracStateFloatDest*>> data;
+};
+struct TheracStateFloatDest {
+    TheracTextState & source_input;
+};
+struct TheracStateVerifier
+{
+    TheracTextState & source_input;
+    TheracTextState & dest_input;
+    
+};
+
+// based on TextInput::UpdateText
+void UpdateText(TextEditState& text)
+{
+    const String chars = SIV3D_ENGINE(TextInput)->getChars();
+
+    if(KeyTab.up())
+        text.tabKey = true;
+    else if(KeyEnter.up())
+        text.enterKey = true;
+    else if(KeyBackspace.up() && text.cursorPos > 0)
+    {
+        text.text.erase(text.text.begin() + text.cursorPos -1);
+        --text.cursorPos;
+    }
+    else if(KeyDelete.up() && text.cursorPos < text.text.size()){
+        text.text.erase(text.text.begin() + text.cursorPos);
+    }
+    for(auto ch: chars)
+    {
+        if (not IsControl(ch))
+        {
+            text.text.insert(text.text.begin() + text.cursorPos, ch);
+            ++text.cursorPos;
+        }
+    }
+}
+// TextBox stuff based on SimpleGUI::TextBox
+// fixed handling of control characters and added ability to set text style and cell background colour
 bool TextBoxAt(TextEditState &text, const Vec2 &center, const double _width,
                const Optional<size_t> &maxChars, const bool enabled, Font const & font, ColorF bgcolor) {
   text.cursorPos = Min(text.cursorPos, text.text.size());
@@ -25,70 +73,41 @@ bool TextBoxAt(TextEditState &text, const Vec2 &center, const double _width,
   const String previousText = text.text;
   const String editingText =
       ((text.active && enabled) ? TextInput::GetEditingText() : U"");
-
-
-//  if(!editingText.empty())
-//      Console << editingText;
-  // テキストを更新する
   {
-    if (text.active && enabled) {
-      // text.text を更新する
-      text.cursorPos = TextInput::UpdateText(
-          text.text, text.cursorPos, TextInputMode::Default);
-      // something is fucked with the default backspace/delete/etc handling in the UpdateText above.
-      // can't see the characters in raw stream etc either
-      if(KeyEnter.up()){
-          
-      }
-      if(KeyBackspace.up())
-      {
-          if(text.cursorPos > 0)
-          {
-              text.text.erase(text.text.begin() + text.cursorPos -1);
-              --text.cursorPos;
-          }
-      }
-    }
+    if (text.active && enabled)
+        UpdateText(text);
+        // something is fucked with the default backspace/delete/etc handling s3d::TextInput::UpdateText
+        // can't see the characters in raw stream etc either. Probably related to not having an IME installed/running
+    
 
-    // 最大字数を超えていたら削る
-    if (maxChars && (*maxChars < text.text.size())) {
-      text.text.resize(*maxChars);
-      text.cursorPos = Min(text.cursorPos, *maxChars);
+
+    if (maxChars && (*maxChars < text.text.size()))
+    {
+        text.text.resize(*maxChars);
+        text.cursorPos = Min(text.cursorPos, *maxChars);
     }
 
 
-    // 文字列に変更があったかを調べる
     text.textChanged = (text.text != previousText);
-    auto raw = TextInput::GetRawInput();
-    if(!raw.empty())
-        Console << TextInput::GetRawInput().xml_escape();
-    // 文字列に変更があれば
-    if (text.textChanged) {
-
-        Console << text.text.xml_escape();
-      // カーソル点滅をリセットする
-      text.cursorStopwatch.restart();
-    }
+    if (text.textChanged) 
+        text.cursorStopwatch.restart();
+    
   }
 
-  // テキストボックス
+  // region is the actual box
   const double width = Max(_width, MinTextBoxWidth);
   const RectF region{Arg::center = center, Max(width, MinTextBoxWidth),
                      TextBoxHeight};
-
-  // マウスカーソルを IBeam にする
+  // mouse cursor
   if (enabled && Cursor::OnClientRect() && region.mouseOver()) {
-      
       Cursor::RequestStyle(CursorStyle::IBeam);
   }
 
-  // 入力カーソルのアクティブ / 非アクティブを切り替える
+  // activate/deactivate input cursor
   if (MouseL.down() && (TextInput::GetEditingText().isEmpty())) {
     if (enabled && Cursor::OnClientRect() && region.mouseOver()) {
       text.active = true;
       text.resetStopwatches();
-
-      // カーソルの位置を計算する
       {
         const double posX = (Cursor::PosF().x - (region.x + 8));
         size_t index = 0;
@@ -110,14 +129,9 @@ bool TextBoxAt(TextEditState &text, const Vec2 &center, const double _width,
     }
   }
 
-  // テキストカーソルを更新する
   if (text.text) {
     if (text.active && enabled && (not editingText)) {
-      // キーでテキストカーソルを移動させる
-      // 一定時間押下すると、テキストカーソルが高速に移動
-
-      // テキストカーソルを先頭へ移動させる
-      if ((KeyControl + KeyHome).down()) // [ctrl] + [home]: 全体の先頭へ
+      if ((KeyControl + KeyHome).down())
       {
         text.cursorPos = 0;
         text.cursorStopwatch.restart();
@@ -127,14 +141,13 @@ bool TextBoxAt(TextEditState &text, const Vec2 &center, const double _width,
 #else
           KeyHome.down()
 #endif
-              ) // [home]: 行頭へ
+              )
       {
         text.cursorPos = 0;
         text.cursorStopwatch.restart();
       }
 
-      // テキストカーソルを末尾へ移動させる
-      if ((KeyControl + KeyEnd).down()) // [ctrl] + [end]: 全体の末尾へ
+      if ((KeyControl + KeyEnd).down())
       {
         text.cursorPos = text.text.size();
         text.cursorStopwatch.restart();
@@ -144,7 +157,7 @@ bool TextBoxAt(TextEditState &text, const Vec2 &center, const double _width,
 #else
           KeyEnd.down()
 #endif
-              ) // [end]: 行末へ
+              )
       {
         text.cursorPos = text.text.size();
         text.cursorStopwatch.restart();
@@ -169,41 +182,28 @@ bool TextBoxAt(TextEditState &text, const Vec2 &center, const double _width,
   }
 
   if (text.active && enabled && (not editingText)) {
-    // [tab][enter] キーで入力カーソルを非アクティブに
     {
-      const String raw = TextInput::GetRawInput();
-      for(auto const ch: raw)
-      {
-          if(ch == U'\b')
-              Console << U"BACKSPACE IN TEXT";
-      }
-      text.tabKey = raw.contains(U'\t');
-      text.enterKey = raw.contains(U'\r');
-      
-
       if (text.tabKey || text.enterKey) {
         text.active = false;
       }
     }
   }
 
-  // 描画
   {
     const Vec2 textPos{(region.x + 8),
                        (center.y - font.height() / 2.0 + FontYOffset - 0.5)};
     
 
-   
+    // actually draw the box
     region.draw(bgcolor);
     
     {
-      const ColorF textColor = GetTextColor(enabled);
+      const ColorF textColor = ActiveTextColor;
       const auto &pixelShader = Font::GetPixelShader(font.method());
 
       double cursorPosX = textPos.x;
       Vec2 editingTextPos = textPos;
 
-      // テキストの描画
       {
         const ScopedCustomShader2D shader{pixelShader};
         Vec2 penPos = textPos;
@@ -216,7 +216,6 @@ bool TextBoxAt(TextEditState &text, const Vec2 &center, const double _width,
           glyph.texture.draw(glyphPos, textColor);
           penPos.x += xAdvance;
 
-          // テキストカーソルの位置の計算を計算する
           if (text.active && (text.cursorPos == (index + 1))) {
             cursorPosX = penPos.x;
             editingTextPos = penPos;
@@ -226,6 +225,7 @@ bool TextBoxAt(TextEditState &text, const Vec2 &center, const double _width,
 
       if (editingText) {
         // 変換テキストとその領域の取得
+        // "get converted/transformed text and its area" presumably from IME but this seems to pass through single ascii characters
         const Array<Glyph> editingGlyphs = font.getGlyphs(editingText);
         Array<Vec2> editingGlyphPositions(editingGlyphs.size());
         {
@@ -239,6 +239,7 @@ bool TextBoxAt(TextEditState &text, const Vec2 &center, const double _width,
         }
 
         // 変換テキスト背景の描画
+        // draw its background
         if (editingGlyphs) {
           const auto &firstGlyph = editingGlyphs.front();
           const auto &lastGlyph = editingGlyphs.back();
@@ -250,6 +251,7 @@ bool TextBoxAt(TextEditState &text, const Vec2 &center, const double _width,
           RectF{pos, w, fontHeight}.draw(ColorF{0,0xff,0});
 
           // 変換テキストの選択範囲の描画
+          // I think this is supposed to draw a shadow behind selected text
           {
 #if SIV3D_PLATFORM(WINDOWS)
 
@@ -283,6 +285,7 @@ bool TextBoxAt(TextEditState &text, const Vec2 &center, const double _width,
         }
 
         // 変換テキストの描画
+        // actually draw the text itself
         {
           const ScopedCustomShader2D shader{pixelShader};
 
@@ -295,6 +298,7 @@ bool TextBoxAt(TextEditState &text, const Vec2 &center, const double _width,
       
 
       // テキスト入力カーソルの描画
+      // more input cursor blinking
       if (text.active && enabled) {
         const bool showCursor = (text.cursorStopwatch.ms() % 1200 < 600) ||
                                 (text.leftPressStopwatch.isRunning() &&
@@ -339,7 +343,7 @@ bool TextBox(TextEditState &text, const Vec2 &pos, double width,
   width = Max(width, MinTextBoxWidth);
 
   return TextBoxAt(text, pos + Vec2{width * 0.5, TextBoxHeight/2}, width, maxChars,
-                   enabled);
+                   enabled,font,bgcolor);
 }
 
 } // namespace UnfriendlyTextBox

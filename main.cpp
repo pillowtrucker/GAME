@@ -1,5 +1,6 @@
 # include "Siv3D.hpp"
-# include "include/UnfriendlyTextBox.h"
+#include "include/UnfriendlyTextBox.h"
+#include <string_view>
 void Main()
 {
     auto main_monitor = System::GetCurrentMonitor();
@@ -30,6 +31,8 @@ void Main()
     Window::Maximize();
     Scene::SetBackground(Palette::Black);
 
+    namespace myutb = mine::UnfriendlyTextBox;
+    HashTable<String, myutb::TheracTextType> input_types;
     
     Array<Array<String>> grid_labels{
     {
@@ -67,8 +70,10 @@ void Main()
     HashTable<String, TextEditState> text_boxes;
     grid.items().each_index([&text_boxes,&grid,transparent](auto i, auto v)
     {
-        if(v.text.starts_with(U"PLACEHOLDER"))
-        { 
+        
+        if(v.text.starts_with(U"PLACEHOLDER") )
+        {
+            auto field = v.text.substr(12,v.text.length());
             TextEditState tes;
 
             text_boxes.insert(std::pair(v.text,tes));
@@ -89,20 +94,10 @@ void Main()
                 TextEditState & tes = text_boxes[v.text];
                 
                 mine::UnfriendlyTextBox::TextBox(tes, Vec2{ i.x * column_width, i.y * actual_row_height},column_width,200,true,myMonoFont,Palette::Black);
-                //SimpleGUI::TextBox(tes, Vec2{ i.x * column_width, i.y * actual_row_height},column_width);
+ 
 
             }
             });
-        /*       ClearPrint();
-
-
-        		const Array<Input> keys = Keyboard::GetAllInputs();
-
-        		for (const auto& key : keys)
-        		{
-        			Print << key.name() << (key.pressed() ? U" pressed" : U" up");
-        		}
-        */
 		fps = Profiler::FPS();
 		Window::SetTitle(fps);
 	}
