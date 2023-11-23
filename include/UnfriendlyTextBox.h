@@ -17,23 +17,6 @@ namespace mine {
 namespace UnfriendlyTextBox
 
 {
-enum TheracTextType
-{
-    FloatSrc,
-    FloatDest,
-    Int,
-    SingleChar,
-    Verifier,
-    Date,
-    Time,
-    Operator,
-    TreatPhase,
-    BeamMode,
-    BeamEnergy,
-    CommandEntry,
-    Const,
-    Normal
-};
 
 /// @brief テキストボックスを表示します。
 /// @param text テキストボックスの状態への参照
@@ -44,7 +27,7 @@ enum TheracTextType
 /// @return テキストが操作された場合 true, それ以外の場合は false
 bool TextBoxAt(TextEditState &text, const Vec2 &center, double width = 200.0,
                const Optional<size_t> &maxChars = unspecified,
-               bool enabled = true, Font const & font = SimpleGUI::GetFont(), ColorF bgcolor = ColorF{0});
+               bool enabled = true, Font const & font = SimpleGUI::GetFont(), ColorF bgcolor = ColorF{0}, double actual_row_height = 200);
 /// @brief テキストボックスを表示します。
 /// @param text テキストボックスの状態への参照
 /// @param pos テキストボックスの左上の座標
@@ -54,7 +37,7 @@ bool TextBoxAt(TextEditState &text, const Vec2 &center, double width = 200.0,
 /// @return テキストが操作された場合 true, それ以外の場合は false
 bool TextBox(TextEditState &text, const Vec2 &pos, double width = 200.0,
              const Optional<size_t> &maxChars = unspecified,
-             bool enabled = true, Font const & font = SimpleGUI::GetFont(), ColorF bgcolor = ColorF{0});
+             bool enabled = true, Font const & font = SimpleGUI::GetFont(), ColorF bgcolor = ColorF{0}, double actual_row_height = 200);
 
 } // namespace UnfriendlyTextBox
 } // namespace mine

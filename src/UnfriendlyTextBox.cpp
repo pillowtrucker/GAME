@@ -1,38 +1,15 @@
 #include "UnfriendlyTextBox.h"
-#include "Siv3D.hpp"
 #include <Siv3D/TextInput.hpp>
 #include "OpenSiv3D/Siv3D/src/Siv3D/Common/Siv3DEngine.hpp"
 #include "OpenSiv3D/Siv3D/src/Siv3D/TextInput/ITextInput.hpp"
 namespace mine {
 namespace UnfriendlyTextBox {
 constexpr double MinTextBoxWidth = 40.0;
-constexpr int32 TextBoxHeight = 36;
 constexpr int32 FontYOffset = -1;
 constexpr ColorF ActiveTextColor{Palette::Lime};
 constexpr ColorF DisabledTextColor{Palette::Lime};
 constexpr ColorF TextAreaEditingTextBackgroundColor{Palette::Black};
-[[nodiscard]]
-inline constexpr ColorF GetTextColor(bool enabled) noexcept
-{
-    return (enabled ? ActiveTextColor : DisabledTextColor);
-}
 
-struct TheracStateVerifier;
-struct TheracStateFloatDest;
-struct TheracTextState
-{
-    TheracTextType text_field_type;
-    std::optional<std::variant<TheracStateVerifier*,TheracStateFloatDest*>> data;
-};
-struct TheracStateFloatDest {
-    TheracTextState & source_input;
-};
-struct TheracStateVerifier
-{
-    TheracTextState & source_input;
-    TheracTextState & dest_input;
-    
-};
 
 // based on TextInput::UpdateText
 void UpdateText(TextEditState& text)
@@ -63,7 +40,7 @@ void UpdateText(TextEditState& text)
 // TextBox stuff based on SimpleGUI::TextBox
 // fixed handling of control characters and added ability to set text style and cell background colour
 bool TextBoxAt(TextEditState &text, const Vec2 &center, const double _width,
-               const Optional<size_t> &maxChars, const bool enabled, Font const & font, ColorF bgcolor) {
+               const Optional<size_t> &maxChars, const bool enabled, Font const & font, ColorF bgcolor, double actual_row_height) {
   text.cursorPos = Min(text.cursorPos, text.text.size());
   text.tabKey = false;
   text.enterKey = false;
@@ -80,7 +57,6 @@ bool TextBoxAt(TextEditState &text, const Vec2 &center, const double _width,
         // can't see the characters in raw stream etc either. Probably related to not having an IME installed/running
     
 
-
     if (maxChars && (*maxChars < text.text.size()))
     {
         text.text.resize(*maxChars);
@@ -93,11 +69,11 @@ bool TextBoxAt(TextEditState &text, const Vec2 &center, const double _width,
         text.cursorStopwatch.restart();
     
   }
-
+  
   // region is the actual box
-  const double width = Max(_width, MinTextBoxWidth);
-  const RectF region{Arg::center = center, Max(width, MinTextBoxWidth),
-                     TextBoxHeight};
+
+  const RectF region{Arg::center = center, Max(_width, MinTextBoxWidth),
+                      actual_row_height};
   // mouse cursor
   if (enabled && Cursor::OnClientRect() && region.mouseOver()) {
       Cursor::RequestStyle(CursorStyle::IBeam);
@@ -339,11 +315,11 @@ bool TextBoxAt(TextEditState &text, const Vec2 &center, const double _width,
   return text.textChanged;
 }
 bool TextBox(TextEditState &text, const Vec2 &pos, double width,
-             const Optional<size_t> &maxChars, const bool enabled, Font const & font, ColorF bgcolor) {
+             const Optional<size_t> &maxChars, const bool enabled, Font const & font, ColorF bgcolor, double actual_row_height) {
   width = Max(width, MinTextBoxWidth);
 
-  return TextBoxAt(text, pos + Vec2{width * 0.5, TextBoxHeight/2}, width, maxChars,
-                   enabled,font,bgcolor);
+  return TextBoxAt(text, pos + Vec2{width * 0.5, (int32) actual_row_height/2}, width, maxChars,
+                   enabled,font,bgcolor,actual_row_height);
 }
 
 } // namespace UnfriendlyTextBox

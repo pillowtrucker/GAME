@@ -1,11 +1,13 @@
 # include "Siv3D.hpp"
-#include "include/UnfriendlyTextBox.h"
-#include <string_view>
+#include "UnfriendlyTextBox.h"
+#include "TheracConfig.h"
+
 void Main()
 {
     auto main_monitor = System::GetCurrentMonitor();
     auto const mms = main_monitor.fullscreenResolution;
     auto const test_font_size = 100;
+    auto max_chars_in_field = 200;
     Font test_font{FontMethod::MSDF, test_font_size, U"resources/engine/font/hasklug/Hasklug.otf"};
     auto test_font_px_width = test_font.getGlyphInfo(U"█").width;
     String longest_column{U"COLLIMATOR ROTATION(DEG)"};
@@ -30,53 +32,65 @@ void Main()
     Window::Resize(mms);
     Window::Maximize();
     Scene::SetBackground(Palette::Black);
-
-    namespace myutb = mine::UnfriendlyTextBox;
-    HashTable<String, myutb::TheracTextType> input_types;
-    
-    Array<Array<String>> grid_labels{
+    namespace tc = TheracConfig;    
+    Array<Array<std::tuple<String,tc::TheracTextType>>> grid_labels{
     {
-        {U"PATIENT NAME:",           U"PLACEHOLDER_PN",  U"",                U"",                U"",             U"",               U""},
-        {U"TREATMENT MODE:",         U"FIX",             U"BEAM TYPE:",      U"PLACEHOLDER_BT",  U"ENERGY (KeV):",U"PLACEHOLDER_EN", U""},
-        {U"",                        U"",                U"",                U"",                U"",             U"",               U""},
-        {U"",                        U"",                U"ACTUAL",          U"PRESCRIBED",      U"",             U"",               U""},
-        {U"UNIT RATE/MINUTE",        U"",                U"PLACEHOLDER_URMA",U"PLACEHOLDER_URMP",U"PLACEHOLDER_V1", U"",             U""},
-        {U"MONITOR UNITS",           U"",                U"PLACEHOLDER_MUA", U"PLACEHOLDER_MUP", U"PLACEHOLDER_V2", U"",             U""},
-        {U"TIME(MIN)",               U"",                U"PLACEHOLDER_TMA", U"PLACEHOLDER_TMP", U"PLACEHOLDER_V3", U"",             U""},
-        {U"",                        U"",                U"",                U"",                U"",             U"",               U""},
-        {U"",                        U"",                U"",                U"",                U"",             U"",               U""},
-        {U"",                        U"",                U"",                U"",                U"",             U"",               U""},
-        {U"GANTRY ROTATION(DEG)",    U"",                U"PLACEHOLDER_GRA", U"PLACEHOLDER_GRP", U"PLACEHOLDER_V4", U"",             U""},
-        {U"COLLIMATOR ROTATION(DEG)",U"",                U"PLACEHOLDER_CRA", U"PLACEHOLDER_CRP", U"PLACEHOLDER_V5", U"",             U""},
-        {U"COLLIMATOR X",            U"",                U"PLACEHOLDER_CXA", U"PLACEHOLDER_CXP", U"PLACEHOLDER_V6", U"",             U""},
-        {U"COLLIMATOR Y",            U"",                U"PLACEHOLDER_CYA", U"PLACEHOLDER_CYP", U"PLACEHOLDER_V7", U"",             U""},
-        {U"WEDGE NUMBER",            U"",                U"PLACEHOLDER_WNA", U"PLACEHOLDER_WNP", U"PLACEHOLDER_V8", U"",             U""},
-        {U"ACCESSORY NUMBER",        U"",                U"PLACEHOLDER_ANA", U"PLACEHOLDER_ANP", U"PLACEHOLDER_V9", U"",             U""},
-        {U"",                        U"",                U"",                U"",                U"",             U"",               U""},
-        {U"",                        U"",                U"",                U"",                U"",             U"",               U""},
-        {U"",                        U"",                U"",                U"",                U"",             U"",               U""},
-        {U"",                        U"",                U"",                U"",                U"",             U"",               U""},
-        {U"",                        U"",                U"",                U"",                U"",             U"TREAT",          U"AUTO"},
-        {U"",                        U"",                U"",                U"",                U"",             U"PLACEHOLDER_MOD",U"173777"},
-        {U"OPR ID:",                 U"PLACEHOLDER_OID", U"REASON:",         U"PLACEHOLDER_REA", U"COMMAND:",     U"PLACEHOLDER_CMD",U""},
+        {{U"PATIENT NAME:",tc::TheracTextType::Const},           {U"PLACEHOLDER_PN",tc::TheracTextType::Normal},{U"",tc::TheracTextType::Const},                   {U"",tc::TheracTextType::Const},                      {U"",tc::TheracTextType::Const},                  {U"",tc::TheracTextType::Const},                  {U"",tc::TheracTextType::Const}},
+        {{U"TREATMENT MODE:",tc::TheracTextType::Const},         {U"FIX",tc::TheracTextType::Const},            {U"BEAM TYPE:",tc::TheracTextType::Const},         {U"PLACEHOLDER_BT",tc::TheracTextType::SingleChar},   {U"ENERGY (KeV):",tc::TheracTextType::Const},     {U"PLACEHOLDER_EN",tc::TheracTextType::Int},      {U"",tc::TheracTextType::Const}},
+        {{U"",tc::TheracTextType::Const},                        {U"",tc::TheracTextType::Const},               {U"",tc::TheracTextType::Const},                   {U"",tc::TheracTextType::Const},                      {U"",tc::TheracTextType::Const},                  {U"",tc::TheracTextType::Const},                  {U"",tc::TheracTextType::Const}},
+        {{U"",tc::TheracTextType::Const},                        {U"",tc::TheracTextType::Const},               {U"ACTUAL",tc::TheracTextType::Const},             {U"PRESCRIBED",tc::TheracTextType::Const},            {U"",tc::TheracTextType::Const},                  {U"",tc::TheracTextType::Const},                  {U"",tc::TheracTextType::Const}},
+        {{U"UNIT RATE/MINUTE",tc::TheracTextType::Const},        {U"",tc::TheracTextType::Const},               {U"PLACEHOLDER_URMA",tc::TheracTextType::FloatSrc},{U"PLACEHOLDER_URMP",tc::TheracTextType::FloatDest},  {U"PLACEHOLDER_V1",tc::TheracTextType::Verifier}, {U"",tc::TheracTextType::Const},                  {U"",tc::TheracTextType::Const}},
+        {{U"MONITOR UNITS",tc::TheracTextType::Const},           {U"",tc::TheracTextType::Const},               {U"PLACEHOLDER_MUA",tc::TheracTextType::FloatSrc}, {U"PLACEHOLDER_MUP",tc::TheracTextType::FloatDest},   {U"PLACEHOLDER_V2",tc::TheracTextType::Verifier}, {U"",tc::TheracTextType::Const},                  {U"",tc::TheracTextType::Const}},
+        {{U"TIME(MIN)",tc::TheracTextType::Const},               {U"",tc::TheracTextType::Const},               {U"PLACEHOLDER_TMA",tc::TheracTextType::FloatSrc}, {U"PLACEHOLDER_TMP",tc::TheracTextType::FloatDest},   {U"PLACEHOLDER_V3",tc::TheracTextType::Verifier}, {U"",tc::TheracTextType::Const},                  {U"",tc::TheracTextType::Const}},
+        {{U"",tc::TheracTextType::Const},                        {U"",tc::TheracTextType::Const},               {U"",tc::TheracTextType::Const},                   {U"",tc::TheracTextType::Const},                      {U"",tc::TheracTextType::Const},                  {U"",tc::TheracTextType::Const},                  {U"",tc::TheracTextType::Const}},
+        {{U"",tc::TheracTextType::Const},                        {U"",tc::TheracTextType::Const},               {U"",tc::TheracTextType::Const},                   {U"",tc::TheracTextType::Const},                      {U"",tc::TheracTextType::Const},                  {U"",tc::TheracTextType::Const},                  {U"",tc::TheracTextType::Const}},
+        {{U"",tc::TheracTextType::Const},                        {U"",tc::TheracTextType::Const},               {U"",tc::TheracTextType::Const},                   {U"",tc::TheracTextType::Const},                      {U"",tc::TheracTextType::Const},                  {U"",tc::TheracTextType::Const},                  {U"",tc::TheracTextType::Const}},
+        {{U"GANTRY ROTATION(DEG)",tc::TheracTextType::Const},    {U"",tc::TheracTextType::Const},               {U"PLACEHOLDER_GRA",tc::TheracTextType::FloatSrc}, {U"PLACEHOLDER_GRP",tc::TheracTextType::FloatDest},   {U"PLACEHOLDER_V4",tc::TheracTextType::Verifier}, {U"",tc::TheracTextType::Const},                  {U"",tc::TheracTextType::Const}},
+        {{U"COLLIMATOR ROTATION(DEG)",tc::TheracTextType::Const},{U"",tc::TheracTextType::Const},               {U"PLACEHOLDER_CRA",tc::TheracTextType::FloatSrc}, {U"PLACEHOLDER_CRP",tc::TheracTextType::FloatDest},   {U"PLACEHOLDER_V5",tc::TheracTextType::Verifier}, {U"",tc::TheracTextType::Const},                  {U"",tc::TheracTextType::Const}},
+        {{U"COLLIMATOR X",tc::TheracTextType::Const},            {U"",tc::TheracTextType::Const},               {U"PLACEHOLDER_CXA",tc::TheracTextType::FloatSrc}, {U"PLACEHOLDER_CXP",tc::TheracTextType::FloatDest},   {U"PLACEHOLDER_V6",tc::TheracTextType::Verifier}, {U"",tc::TheracTextType::Const},                  {U"",tc::TheracTextType::Const}},
+        {{U"COLLIMATOR Y",tc::TheracTextType::Const},            {U"",tc::TheracTextType::Const},               {U"PLACEHOLDER_CYA",tc::TheracTextType::FloatSrc}, {U"PLACEHOLDER_CYP",tc::TheracTextType::FloatDest},   {U"PLACEHOLDER_V7",tc::TheracTextType::Verifier}, {U"",tc::TheracTextType::Const},                  {U"",tc::TheracTextType::Const}},
+        {{U"WEDGE NUMBER",tc::TheracTextType::Const},            {U"",tc::TheracTextType::Const},               {U"PLACEHOLDER_WNA",tc::TheracTextType::FloatSrc}, {U"PLACEHOLDER_WNP",tc::TheracTextType::FloatDest},   {U"PLACEHOLDER_V8",tc::TheracTextType::Verifier}, {U"",tc::TheracTextType::Const},                  {U"",tc::TheracTextType::Const}},
+        {{U"ACCESSORY NUMBER",tc::TheracTextType::Const},        {U"",tc::TheracTextType::Const},               {U"PLACEHOLDER_ANA",tc::TheracTextType::FloatSrc}, {U"PLACEHOLDER_ANP",tc::TheracTextType::FloatDest},   {U"PLACEHOLDER_V9",tc::TheracTextType::Verifier}, {U"",tc::TheracTextType::Const},                  {U"",tc::TheracTextType::Const}},
+        {{U"",tc::TheracTextType::Const},                        {U"",tc::TheracTextType::Const},               {U"",tc::TheracTextType::Const},                   {U"",tc::TheracTextType::Const},                      {U"",tc::TheracTextType::Const},                  {U"",tc::TheracTextType::Const},                  {U"",tc::TheracTextType::Const}},
+        {{U"",tc::TheracTextType::Const},                        {U"",tc::TheracTextType::Const},               {U"",tc::TheracTextType::Const},                   {U"",tc::TheracTextType::Const},                      {U"",tc::TheracTextType::Const},                  {U"",tc::TheracTextType::Const},                  {U"",tc::TheracTextType::Const}},
+        {{U"",tc::TheracTextType::Const},                        {U"",tc::TheracTextType::Const},               {U"",tc::TheracTextType::Const},                   {U"",tc::TheracTextType::Const},                      {U"",tc::TheracTextType::Const},                  {U"",tc::TheracTextType::Const},                  {U"",tc::TheracTextType::Const}},
+        {{U"",tc::TheracTextType::Const},                        {U"",tc::TheracTextType::Const},               {U"",tc::TheracTextType::Const},                   {U"",tc::TheracTextType::Const},                      {U"",tc::TheracTextType::Const},                  {U"",tc::TheracTextType::Const},                  {U"",tc::TheracTextType::Const}},
+        {{U"DATE:",tc::TheracTextType::Const},                   {U"PLACEHOLDER_DAT",tc::TheracTextType::Date}, {U"SYSTEM:",tc::TheracTextType::Const},            {U"PLACEHOLDER_SYS",tc::TheracTextType::Subsys},      {U"OP MODE:",tc::TheracTextType::Const},          {U"TREAT",tc::TheracTextType::Const},             {U"AUTO",tc::TheracTextType::Const}},
+        {{U"TIME",tc::TheracTextType::Const},                    {U"PLACEHOLDER_TIM",tc::TheracTextType::Time}, {U"TREAT:",tc::TheracTextType::Const},             {U"PLACEHOLDER_TREAT",tc::TheracTextType::TreatPhase},{U"",tc::TheracTextType::Const},                  {U"PLACEHOLDER_MOD",tc::TheracTextType::Const},   {U"173777",tc::TheracTextType::Const}},
+        {{U"OPR ID:",tc::TheracTextType::Const},                 {U"PLACEHOLDER_OID",tc::TheracTextType::OID},  {U"REASON:",tc::TheracTextType::Const},            {U"PLACEHOLDER_REAS",tc::TheracTextType::Reason},     {U"COMMAND:",tc::TheracTextType::Const},          {U"PLACEHOLDER_CMD",tc::TheracTextType::CmdEntry},{U"",tc::TheracTextType::Const}},
     }
     };
     grid_labels.each([&grid] (auto row){
-        grid.push_back_row(row);
+        auto label_row = row.map([](auto l)
+        {
+            return std::get<0>(l);
+        });
+        grid.push_back_row(label_row);
     });
-
+    //JSON testojson{grid_labels};
+    //testojson.save(U"./testo.json");
     auto actual_row_height = grid.height()/grid.rows();
+    Console << actual_row_height;
+
+
+    
+    namespace myutb = mine::UnfriendlyTextBox;
 
     HashTable<String, TextEditState> text_boxes;
+//    HashTable<String, tc::TheracConfig> text_boxes;
+
     grid.items().each_index([&text_boxes,&grid,transparent](auto i, auto v)
     {
         
-        if(v.text.starts_with(U"PLACEHOLDER") )
+        if(v.text.starts_with(U"PL") )
         {
-            auto field = v.text.substr(12,v.text.length());
-            TextEditState tes;
 
-            text_boxes.insert(std::pair(v.text,tes));
+            TextEditState tes;
+            auto suf = v.text.substr(12);
+            //auto thc = tc::TheracConfig{suf};
+//            tc::TheracConfig thc{tes};
+
+            text_boxes.insert({v.text,tes});
 
             grid.setTextColor(i.y,i.x,transparent);
             grid.setBackgroundColor(i.y,i.x,transparent);
@@ -87,13 +101,13 @@ void Main()
 	while (System::Update())
 	{
         grid.draw(Vec2{0,0});
-        grid.items().each_index([&text_boxes,column_width,actual_row_height,myMonoFont](auto i, auto v)
+        grid.items().each_index([&text_boxes,column_width,actual_row_height,myMonoFont,max_chars_in_field](auto i, auto v)
         {
             if(v.text.starts_with(U"PLACEHOLDER"))
             {
                 TextEditState & tes = text_boxes[v.text];
                 
-                mine::UnfriendlyTextBox::TextBox(tes, Vec2{ i.x * column_width, i.y * actual_row_height},column_width,200,true,myMonoFont,Palette::Black);
+                mine::UnfriendlyTextBox::TextBox(tes, Vec2{ i.x * column_width, i.y * actual_row_height},column_width,max_chars_in_field,true,myMonoFont,Palette::Black,actual_row_height);
  
 
             }
