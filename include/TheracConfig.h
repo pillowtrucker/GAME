@@ -10,7 +10,7 @@ enum TheracTextType
 {
     FloatSrc, //0
     FloatDest, //1
-    Int, //2
+    BeamEnergy, //2
     SingleChar, //3
     Verifier, //4
     Date, //5
@@ -18,21 +18,29 @@ enum TheracTextType
     OID, //7
     TreatPhase, //8
     BeamMode, //9
-    BeamEnergy, //10
-    CmdEntry, //11
-    Const, //12
-    Reason, //13
-    Normal, //14
-    Subsys, //15
+    CmdEntry, //10
+    Const, //11
+    Reason, //12
+    Normal, //13
+    Subsys, //14
 };
 class TheracConfig
 {
 public:
-    TheracConfig(String suf, Point p_in_grid,SimpleTable & grid);
+    TheracConfig(String name, Point _p_in_grid,SimpleTable & grid, TextEditState _tes, HashTable<String, TheracTextType> & types);
     TheracTextType text_field_type;
+    Point p_in_grid;
     TextEditState tes;
-private:
     std::optional<TheracConfig *> next_field;
-    std::optional<std::variant<TheracConfigVerifier*,TheracConfigFloatDest*>> data;
+    bool enabled = false;
+    std::optional<HashTable<String, TheracConfig*>> dynamic_widgets;
+    SimpleTable & grid;
+    String name;
+    uint32_t max_chars = 200;
+    void finish_setup();
+    void mangle();
+    std::variant<std::monostate,TheracConfigVerifier *,TheracConfigFloatDest *> my_data;
+private:
+
 };
 } // namespace TheracConfig

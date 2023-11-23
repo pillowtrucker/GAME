@@ -4,10 +4,11 @@
 
 void Main()
 {
+    auto background_colour = Palette::Black;
     auto main_monitor = System::GetCurrentMonitor();
     auto const mms = main_monitor.fullscreenResolution;
     auto const test_font_size = 100;
-    auto max_chars_in_field = 200;
+    auto default_chars_in_field = 200;
     Font test_font{FontMethod::MSDF, test_font_size, U"resources/engine/font/hasklug/Hasklug.otf"};
     auto test_font_px_width = test_font.getGlyphInfo(U"█").width;
     String longest_column{U"COLLIMATOR ROTATION(DEG)"};
@@ -24,19 +25,19 @@ void Main()
     {
         (Array<double> const &) columns_,
         {
-            .borderThickness = 0, .backgroundColor = Palette::Black,.textColor = Palette::Lime, .variableWidth = false, .font = myMonoFont, .fontSize = font_size
+            .borderThickness = 0, .backgroundColor = background_colour,.textColor = Palette::Lime, .variableWidth = false, .font = myMonoFont, .fontSize = font_size
         }
     };
     int32 fps;
     
     Window::Resize(mms);
     Window::Maximize();
-    Scene::SetBackground(Palette::Black);
+    Scene::SetBackground(background_colour);
     namespace tc = TheracConfig;    
-    Array<Array<std::tuple<String,tc::TheracTextType>>> grid_labels{
+    Array<Array<std::pair<String,tc::TheracTextType>>> ui_widgets{
     {
         {{U"PATIENT NAME:",tc::TheracTextType::Const},           {U"PLACEHOLDER_PN",tc::TheracTextType::Normal},{U"",tc::TheracTextType::Const},                   {U"",tc::TheracTextType::Const},                      {U"",tc::TheracTextType::Const},                  {U"",tc::TheracTextType::Const},                  {U"",tc::TheracTextType::Const}},
-        {{U"TREATMENT MODE:",tc::TheracTextType::Const},         {U"FIX",tc::TheracTextType::Const},            {U"BEAM TYPE:",tc::TheracTextType::Const},         {U"PLACEHOLDER_BT",tc::TheracTextType::SingleChar},   {U"ENERGY (KeV):",tc::TheracTextType::Const},     {U"PLACEHOLDER_EN",tc::TheracTextType::Int},      {U"",tc::TheracTextType::Const}},
+        {{U"TREATMENT MODE:",tc::TheracTextType::Const},         {U"FIX",tc::TheracTextType::Const},            {U"BEAM TYPE:",tc::TheracTextType::Const},         {U"PLACEHOLDER_BT",tc::TheracTextType::SingleChar},   {U"ENERGY (KeV):",tc::TheracTextType::Const},     {U"PLACEHOLDER_EN",tc::TheracTextType::BeamEnergy},      {U"",tc::TheracTextType::Const}},
         {{U"",tc::TheracTextType::Const},                        {U"",tc::TheracTextType::Const},               {U"",tc::TheracTextType::Const},                   {U"",tc::TheracTextType::Const},                      {U"",tc::TheracTextType::Const},                  {U"",tc::TheracTextType::Const},                  {U"",tc::TheracTextType::Const}},
         {{U"",tc::TheracTextType::Const},                        {U"",tc::TheracTextType::Const},               {U"ACTUAL",tc::TheracTextType::Const},             {U"PRESCRIBED",tc::TheracTextType::Const},            {U"",tc::TheracTextType::Const},                  {U"",tc::TheracTextType::Const},                  {U"",tc::TheracTextType::Const}},
         {{U"UNIT RATE/MINUTE",tc::TheracTextType::Const},        {U"",tc::TheracTextType::Const},               {U"PLACEHOLDER_URMA",tc::TheracTextType::FloatSrc},{U"PLACEHOLDER_URMP",tc::TheracTextType::FloatDest},  {U"PLACEHOLDER_V1",tc::TheracTextType::Verifier}, {U"",tc::TheracTextType::Const},                  {U"",tc::TheracTextType::Const}},
@@ -60,55 +61,56 @@ void Main()
         {{U"OPR ID:",tc::TheracTextType::Const},                 {U"PLACEHOLDER_OID",tc::TheracTextType::OID},  {U"REASON:",tc::TheracTextType::Const},            {U"PLACEHOLDER_REAS",tc::TheracTextType::Reason},     {U"COMMAND:",tc::TheracTextType::Const},          {U"PLACEHOLDER_CMD",tc::TheracTextType::CmdEntry},{U"",tc::TheracTextType::Const}},
     }
     };
-    grid_labels.each([&grid] (auto row){
-        auto label_row = row.map([](auto l)
+    HashTable<String, tc::TheracTextType> widget_types;
+    
+    ui_widgets.each([&grid,&widget_types] (auto row){
+        auto label_row = row.map([&widget_types](auto l)
         {
-            return std::get<0>(l);
+            widget_types.insert(l);
+            return l.first;
         });
+
         grid.push_back_row(label_row);
     });
-    //JSON testojson{grid_labels};
-    //testojson.save(U"./testo.json");
+    JSON testojson{ui_widgets};
+    testojson.save(U"./testo.json");
     auto actual_row_height = grid.height()/grid.rows();
     Console << actual_row_height;
-
-
     
-    namespace myutb = mine::UnfriendlyTextBox;
+    //    namespace myutb = mine::UnfriendlyTextBox;
 
-    HashTable<String, TextEditState> text_boxes;
-//    HashTable<String, tc::TheracConfig> text_boxes;
+    HashTable<String, tc::TheracConfig*> dynamic_widgets;
 
-    grid.items().each_index([&text_boxes,&grid,transparent](auto i, auto v)
-    {
-        
+    grid.items().each_index([&widget_types,&dynamic_widgets,&grid,transparent](auto i, auto v)
+    {    
         if(v.text.starts_with(U"PL") )
         {
-
+            auto name = v.text;
             TextEditState tes;
-            auto suf = v.text.substr(12);
-            //auto thc = tc::TheracConfig{suf};
-//            tc::TheracConfig thc{tes};
-
-            text_boxes.insert({v.text,tes});
-
+            tc::TheracConfig * thc = new tc::TheracConfig{name,i,grid,tes,widget_types};
+                
+            dynamic_widgets.insert({name,thc});
             grid.setTextColor(i.y,i.x,transparent);
             grid.setBackgroundColor(i.y,i.x,transparent);
 
         }
     });
+    for (auto w: dynamic_widgets)
+    {
+        w.second->dynamic_widgets = dynamic_widgets;
+        w.second->finish_setup();
+    }
    
 	while (System::Update())
 	{
         grid.draw(Vec2{0,0});
-        grid.items().each_index([&text_boxes,column_width,actual_row_height,myMonoFont,max_chars_in_field](auto i, auto v)
+        grid.items().each_index([&dynamic_widgets,background_colour,column_width,actual_row_height,&myMonoFont](auto i, auto v)
         {
-            if(v.text.starts_with(U"PLACEHOLDER"))
+            if(v.text.starts_with(U"PL"))
             {
-                TextEditState & tes = text_boxes[v.text];
-                
-                mine::UnfriendlyTextBox::TextBox(tes, Vec2{ i.x * column_width, i.y * actual_row_height},column_width,max_chars_in_field,true,myMonoFont,Palette::Black,actual_row_height);
- 
+                tc::TheracConfig & w = *dynamic_widgets[v.text];
+                w.mangle();
+                mine::UnfriendlyTextBox::TextBox(w.tes, Vec2{ i.x * column_width, i.y * actual_row_height},column_width,w.max_chars,w.enabled,myMonoFont,background_colour,actual_row_height);
 
             }
             });
