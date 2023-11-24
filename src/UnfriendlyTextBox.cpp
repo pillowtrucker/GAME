@@ -156,7 +156,7 @@ bool TextBoxAt(TextEditState &text, const Vec2 &center, const double _width,
       }
     }
   }
-
+/*
   if (text.active && enabled && (not editingText)) {
     {
       if (text.tabKey || text.enterKey) {
@@ -164,7 +164,7 @@ bool TextBoxAt(TextEditState &text, const Vec2 &center, const double _width,
       }
     }
   }
-
+*/
   {
     const Vec2 textPos{(region.x + 8),
                        (center.y - font.height() / 2.0 + FontYOffset - 0.5)};

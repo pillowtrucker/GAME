@@ -79,8 +79,8 @@ void Main()
             if(v.text.starts_with(U"PL"))
             {
                 tc::TheracConfig & w = *dynamic_widgets[v.text];
-                w.mangle();
                 mine::UnfriendlyTextBox::TextBox(w.tes, Vec2{ i.x * column_width, i.y * actual_row_height},column_width,w.max_chars,w.enabled,myMonoFont,background_colour,actual_row_height);
+                w.mangle();
 
             }
             });
