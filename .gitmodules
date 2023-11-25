@@ -1,3 +1,6 @@
 [submodule "OpenSiv3D"]
 	path = OpenSiv3D
 	url = git@github-pillow:pillowtrucker/OpenSiv3D.git
+[submodule "tileson"]
+	path = tileson
+	url = git@github-pillow:pillowtrucker/tileson.git

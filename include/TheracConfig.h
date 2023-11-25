@@ -42,7 +42,7 @@ public:
     TextEditState tes;
     TheracConfig * next_field;
     bool enabled = false;
-    std::optional<HashTable<String, TheracConfig*>> dynamic_widgets;
+    Optional<HashTable<String, TheracConfig*>> dynamic_widgets;
     SimpleTable & grid;
     String name;
     uint32_t max_chars = 200;

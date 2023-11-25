@@ -1,58 +1,81 @@
 # include <Siv3D.hpp>
 #include "TheracMinigame.h"
+#include "Therac3DScene.h"
+#include "OpenSiv3D/Siv3D/src/ThirdParty/nlohmann/json.hpp"
+#include "tileson/tileson.hpp"
+
+
+class StageMap
+{
+public:
+
+	
+	int32 map_tile_size_x;
+    int32 map_tile_size_y;
+    int32 map_tileset_x;
+    int32 map_tileset_y;
+
+	StageMap(String path, tson::Vector2i tileset_dimensions, tson::Vector2i tile_dimensions = tson::Vector2i{16,16})
+		: m_base{ path}
+    {
+        map_tile_size_x = tile_dimensions.x;
+        map_tile_size_y = tile_dimensions.y;
+        map_tileset_x = tileset_dimensions.x/map_tile_size_x;
+        map_tileset_y = tileset_dimensions.y/map_tile_size_y;
+    }
+
+	
+    	TextureRegion get(int32 tileIndex) const
+	{
+        auto tileAdjusted = tileIndex -1;
+		const int32 x = ((tileAdjusted) % (map_tileset_x)) * map_tile_size_x;
+		const int32 y = ((tileAdjusted) / (map_tileset_x)) * map_tile_size_y;
+       
+		return m_base(x, y,map_tile_size_x);
+	}
+    
+private:
+
+	Texture m_base;
+};
 
 void Main()
 {
     int32 fps;
-    Window::Resize(1920, 1080);
-	const ColorF backgroundColor = ColorF{ 0.4, 0.6, 0.8 }.removeSRGBCurve();
-    const Mesh groundPlane{ MeshData::OneSidedPlane(2000, { 400, 400 }) };
-    const Model theracModel{ U"resources/therac-25-base.obj" };
-    Model pdp11Model{ U"resources/pdp11.obj" };
-    const Model vt100Model{ U"resources/vt100.obj" };
-    
-    Model::RegisterDiffuseTextures(theracModel, TextureDesc::MippedSRGB);
-    Model::RegisterDiffuseTextures(vt100Model, TextureDesc::MippedSRGB);
-    Model::RegisterDiffuseTextures(pdp11Model, TextureDesc::MippedSRGB);
-    const MSRenderTexture renderTexture{ Scene::Size(), TextureFormat::R8G8B8A8_Unorm_SRGB, HasDepth::Yes };
-	DebugCamera3D camera{ Graphics3D::GetRenderTargetSize(), 40_deg, Vec3{ 0, 3, -16 } };
-    const Texture groundTexture{ U"resources/PolyPackBoats.png", TextureDesc::MippedSRGB };
-	while (System::Update())
-	{
-        camera.update(4.0);
-		Graphics3D::SetCameraTransform(camera);
+    //    auto map_stage1 = JSON::Load(U"resources/stage1.tmj");
+    //    Console << map_stage1;
+    tson::Tileson tileson_nlohmann {std::make_unique<tson::NlohmannJson>()};
+    auto stage1 = tileson_nlohmann.parse("resources/stage1.tmj");
 
-		// [3D シーンの描画]
-		{
-			const ScopedRenderTarget3D target{ renderTexture.clear(backgroundColor) };
+    if(stage1->getStatus() == tson::ParseStatus::OK)
+        {
+            //std::cout << stage1->getTiledVersion();
+        }
+    else System::Exit();
+    auto stage1_tile_size = stage1->getTilesets()[0].getTileSize();
+    auto stage1_tileset_size = stage1->getTilesets()[0].getImageSize();
 
-			// [モデルの描画]
-			{
-				// 地面の描画
-				groundPlane.draw(groundTexture);
+    auto stage1tilespath = String{stage1->getTilesets()[0].getFullImagePath().generic_u32string()};
+    Console << stage1tilespath;
 
-				// 球の描画
-                //				Sphere{ { 0, 1, 0 }, 1 }.draw(ColorF{ 0.75 }.removeSRGBCurve());
-                vt100Model.draw(Vec3{0,0,0});
-                pdp11Model.draw(Vec3{5,0,-5});
-                
-				theracModel.draw(Vec3{ 2, 0, -2 }, Quaternion::RotateY(180_deg));
-			}
-		}
 
-		// [RenderTexture を 2D シーンに描画]
-		{
-			Graphics3D::Flush();
-			renderTexture.resolve();
-            
-			Shader::LinearToScreen(renderTexture);
-		}
-        if(KeyF5.up())
-            goto Therac;
-		fps = Profiler::FPS();
-		Window::SetTitle(fps);
+    StageMap stage1map{U"resources/{}"_fmt(stage1tilespath),stage1_tileset_size,stage1_tile_size};
+    auto toilet = stage1->getLayer("Object Layer 1")->firstObj("the toilet");
+
+
         
-	}
- Therac:
-    TheracMinigame();
+    while(System::Update())
+        {
+            stage1map.get(toilet->getGid()).scaled(4).draw();
+
+            if(KeyF5.up())
+                goto Therac;
+            if(KeyF6.up())
+                goto Therac3D;
+            fps = Profiler::FPS();
+            Window::SetTitle(fps);
+        }
+ Therac3D: Therac3DScene();
+ Therac : TheracMinigame();
+
 }
