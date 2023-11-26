@@ -60,15 +60,26 @@ void Main()
 
 
     StageMap stage1map{U"resources/{}"_fmt(stage1tilespath),stage1_tileset_size,stage1_tile_size};
-    auto toilet = stage1->getLayer("Object Layer 1")->firstObj("the toilet");
+    auto toilet = stage1->getLayer("Interactive Objects")->firstObj("the toilet");
 
-
+    
         
     while(System::Update())
         {
             const ScopedRenderStates2D sampler{ SamplerState::ClampNearest };
-            stage1map.get(toilet->getGid()).scaled(4).draw();
-
+            auto layer = stage1->getLayer("Static Tiles");
+            
+                
+            for(auto& [tilepos, tileobj]: layer->getTileData())
+            {
+                //Console << U"got an object";
+                
+                //Console << tileobj->getId();
+                //Console << tileobj->getGid();
+                stage1map.get(tileobj->getId()).drawAt(std::get<0>(tilepos) * stage1_tile_size.x,std::get<1>(tilepos) * stage1_tile_size.y);
+                
+            }
+            
             if(KeyF5.up())
                 goto Therac;
             if(KeyF6.up())

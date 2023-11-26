@@ -34,6 +34,7 @@ void Therac3DScene()
     const MSRenderTexture renderTexture{ Scene::Size(), TextureFormat::R8G8B8A8_Unorm_SRGB, HasDepth::Yes };
 	DebugCamera3D camera{ Graphics3D::GetRenderTargetSize(), 40_deg, Vec3{ 0, 3, -16 } };
     const Texture groundTexture{ U"resources/PolyPackBoats.png", TextureDesc::MippedSRGB };
+    
 	while (System::Update())
 	{
         camera.update(4.0);
@@ -43,10 +44,12 @@ void Therac3DScene()
 		{
 			const ScopedRenderTarget3D target{ renderTexture.clear(backgroundColor) };
 
+
 			// [モデルの描画]
 			{
 				// 地面の描画
 				groundPlane.draw(groundTexture);
+                
 
 				// 球の描画
                 //				Sphere{ { 0, 1, 0 }, 1 }.draw(ColorF{ 0.75 }.removeSRGBCurve());
