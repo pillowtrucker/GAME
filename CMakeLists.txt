@@ -17,8 +17,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -Wextra -Wpedantic -Wno-unused-parameter")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 include_directories(${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/include)
-add_library(theracMinigame src/TheracConfig.cpp src/UnfriendlyTextBox.cpp src/TheracMinigame.cpp)
-add_library(therac3DScene src/Therac3DScene.cpp)
+add_library(theracMinigame SHARED src/TheracConfig.cpp src/UnfriendlyTextBox.cpp src/TheracMinigame.cpp)
+add_library(therac3DScene SHARED src/Therac3DScene.cpp)
+set_target_properties(therac3DScene PROPERTIES PUBLIC_HEADER include/Therac3DScene.h)
 
 add_executable(GAME main.cpp)
 

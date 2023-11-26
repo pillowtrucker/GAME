@@ -66,6 +66,7 @@ void Main()
         
     while(System::Update())
         {
+            const ScopedRenderStates2D sampler{ SamplerState::ClampNearest };
             stage1map.get(toilet->getGid()).scaled(4).draw();
 
             if(KeyF5.up())
@@ -75,7 +76,7 @@ void Main()
             fps = Profiler::FPS();
             Window::SetTitle(fps);
         }
- Therac3D: Therac3DScene();
+Therac3D: t3d::Therac3DScene();
  Therac : TheracMinigame();
 
 }

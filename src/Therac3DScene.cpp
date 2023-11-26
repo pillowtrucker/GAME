@@ -1,4 +1,24 @@
 #include "Therac3DScene.h"
+#include "OpenSiv3D/Siv3D/src/Siv3D/Common/Siv3DEngine.hpp"
+#include <Siv3D.hpp>
+# include <OpenSiv3D/Siv3D/src/Siv3D/System/ISystem.hpp>
+# include <Siv3D/Error.hpp>
+# include <Siv3D/EngineLog.hpp>
+namespace t3d
+{
+
+
+
+
+
+void Main()
+{
+    Siv3DEngine engine;
+    SIV3D_ENGINE(System)->init();
+
+    Console << Siv3DEngine::isActive();
+    Therac3DScene();
+}
 void Therac3DScene()
 {
 //    Window::Resize(1920, 1080);
@@ -45,4 +65,5 @@ void Therac3DScene()
 			Shader::LinearToScreen(renderTexture);
 		}
         }
-}        
+}
+} // namespace t3d

@@ -1,3 +1,6 @@
 #pragma once
-# include <Siv3D.hpp>
+namespace t3d
+{    
 void Therac3DScene();
+void Main();
+} // namespace t3d
