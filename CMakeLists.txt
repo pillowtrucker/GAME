@@ -3,6 +3,7 @@ project(GAME)
 
 # this is way easier than finding the 382 deps found by ldd
 find_package(Siv3D)
+find_package(EnTT)
 
 file(COPY resources DESTINATION ${CMAKE_BINARY_DIR})
 
@@ -23,7 +24,7 @@ set_target_properties(therac3DScene PROPERTIES PUBLIC_HEADER include/Therac3DSce
 
 add_executable(GAME main.cpp)
 
-target_link_libraries(theracMinigame Siv3D::Siv3D)
-target_link_libraries(therac3DScene Siv3D::Siv3D)
+target_link_libraries(theracMinigame Siv3D::Siv3D EnTT::EnTT)
+target_link_libraries(therac3DScene Siv3D::Siv3D EnTT::EnTT)
 
-target_link_libraries(GAME PUBLIC Siv3D::Siv3D PUBLIC theracMinigame PUBLIC therac3DScene)
+target_link_libraries(GAME PUBLIC Siv3D::Siv3D PUBLIC EnTT::EnTT PUBLIC theracMinigame PUBLIC therac3DScene)

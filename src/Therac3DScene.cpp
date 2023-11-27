@@ -3,14 +3,15 @@
 #include <Siv3D.hpp>
 # include <OpenSiv3D/Siv3D/src/Siv3D/System/ISystem.hpp>
 # include <Siv3D/Error.hpp>
-# include <Siv3D/EngineLog.hpp>
+#include <Siv3D/EngineLog.hpp>
+#include <entt/entt.hpp>
 namespace t3d
 {
 
 
 
 
-
+// Engine has to be started manually if Siv3D doesn't control main()
 void Main()
 {
     Siv3DEngine engine;
@@ -19,9 +20,10 @@ void Main()
     Console << Siv3DEngine::isActive();
     Therac3DScene();
 }
+
 void Therac3DScene()
 {
-//    Window::Resize(1920, 1080);
+    
 	const ColorF backgroundColor = ColorF{ 0.4, 0.6, 0.8 }.removeSRGBCurve();
     const Mesh groundPlane{ MeshData::OneSidedPlane(2000, { 400, 400 }) };
     const Model theracModel{ U"resources/therac-25-base.obj" };

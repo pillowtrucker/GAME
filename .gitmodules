@@ -4,3 +4,6 @@
 [submodule "tileson"]
 	path = tileson
 	url = git@github-pillow:pillowtrucker/tileson.git
+[submodule "entt"]
+	path = entt
+	url = git@github-pillow:pillowtrucker/entt.git

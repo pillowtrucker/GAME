@@ -3,7 +3,7 @@
 #include "Therac3DScene.h"
 #include "OpenSiv3D/Siv3D/src/ThirdParty/nlohmann/json.hpp"
 #include "tileson/tileson.hpp"
-
+#include <entt/entt.hpp>
 
 class StageMap
 {
@@ -39,9 +39,49 @@ private:
 	Texture m_base;
 };
 
+namespace GammeOntology
+{
+// eg wall, floor, every static tile
+struct Fungible
+{
+//    const char32 * obj_type; // should be looked up by id in a map
+    std::variant<uint32_t,const char32 *> unique_gid;
+    Array<std::variant<std::monostate,Vec2,Float3>> instance_coords; // where in the world things like this reside
+};
+struct Object
+{
+    const char32 * name; // instead of storing aliases use other properties ?
+    Optional<const char32 *> descr; //basic description to be expanded by other properties
+};
+struct Container
+{
+    std::stack<entt::any> contents;
+};
+struct Inventory
+{
+    Array<entt::any> contents;
+};
+struct TooDeeCoords
+{
+    Vec2 c;
+};
+struct ThreeDeeCoords
+{
+    Float3 c;
+};
+} // namespace GammeOntology
+
+
 void Main()
 {
     int32 fps;
+    entt::registry registry;
+    auto main_monitor = System::GetCurrentMonitor();
+    auto const mms = main_monitor.fullscreenResolution;
+    Window::SetStyle(WindowStyle::Frameless);
+    Window::Resize(mms);
+    Window::Maximize();
+
     //    auto map_stage1 = JSON::Load(U"resources/stage1.tmj");
     //    Console << map_stage1;
     tson::Tileson tileson_nlohmann {std::make_unique<tson::NlohmannJson>()};
@@ -60,25 +100,60 @@ void Main()
 
 
     StageMap stage1map{U"resources/{}"_fmt(stage1tilespath),stage1_tileset_size,stage1_tile_size};
-    auto toilet = stage1->getLayer("Interactive Objects")->firstObj("the toilet");
-
+    namespace gq = GammeOntology;
+    auto static_layer = stage1->getLayer("Static Tile Ents");
+            
+                
+            for(auto& tileobj: static_layer->getObjects())
+            {
+                std::variant<std::monostate,Vec2,Float3> extra_coords;
+                Vec2 new_coord{tileobj.getPosition().x,tileobj.getPosition().y};
+                extra_coords = new_coord;                
+                auto entity = registry.create();
+                registry.emplace<gq::Fungible>(entity,gq::Fungible{.unique_gid = tileobj.getGid(),.instance_coords = Array{extra_coords}});        
+                for(auto [ent,fung] :registry.view<gq::Fungible>().each())
+                {
+                    Console << new_coord;
+                    if(std::get<uint32_t>(fung.unique_gid) == tileobj.getGid() && ent != entity)
+                    {
+                        fung.instance_coords.push_back(extra_coords);
+                        registry.destroy(entity);
+                    }
+                    
+                
+                }
+            }
     
-        
+    const auto scaling_factor = 4;
     while(System::Update())
         {
             const ScopedRenderStates2D sampler{ SamplerState::ClampNearest };
-            auto layer = stage1->getLayer("Static Tiles");
             
                 
-            for(auto& [tilepos, tileobj]: layer->getTileData())
+            for(auto [ent, data]: registry.view<gq::Fungible>().each())
             {
-                //Console << U"got an object";
-                
-                //Console << tileobj->getId();
-                //Console << tileobj->getGid();
-                stage1map.get(tileobj->getId()).drawAt(std::get<0>(tilepos) * stage1_tile_size.x,std::get<1>(tilepos) * stage1_tile_size.y);
+                for(auto coords: data.instance_coords)
+                {
+                    auto the_coords = std::get<Vec2>(coords);
+//                    Console << the_coords;
+                    stage1map.get(std::get<uint32_t>(data.unique_gid)).scaled(scaling_factor).drawAt(the_coords.x*scaling_factor,the_coords.y*scaling_factor);
+                }
                 
             }
+
+            auto interactive_layer = stage1->getLayer("Interactive Ents");
+            for(auto& tileobj: interactive_layer->getObjects())
+            {
+                stage1map.get(tileobj.getGid()).scaled(scaling_factor).drawAt(tileobj.getPosition().x*scaling_factor,tileobj.getPosition().y*scaling_factor);
+            }
+            auto actor_layer = stage1->getLayer("Actor Ents");
+            for(auto& tileobj: actor_layer->getObjects())
+            {
+                ScopedColorAdd2D recolor{Palette::Green};
+                stage1map.get(tileobj.getGid()).scaled(scaling_factor).drawAt(tileobj.getPosition().x*scaling_factor,tileobj.getPosition().y*scaling_factor);
+            }
+
+            
             
             if(KeyF5.up())
                 goto Therac;
