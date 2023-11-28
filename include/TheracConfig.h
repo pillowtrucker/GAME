@@ -51,9 +51,12 @@ public:
     void finish_setup();
     void mangle();
     std::variant<std::monostate,TheracConfigVerifier*,TheracConfigFloatDest*> my_data;
+    void save_ui_widgets();
+    void load_ui_widgets();
 private:
     void verify_floats();
     void floatify();
     void enforce_int();
+    Array<Array<std::pair<String, TheracTextType>>> ui_widgets;
 };
 } // namespace TheracConfig

@@ -46,18 +46,8 @@ void Main() {
   //ok2.save(U"resources/stage1/tile_descriptions.json");
   TextWriter w_tile_descs{U"resources/stage1/tile_descriptions.json"};
   w_tile_descs.writeUTF8(ok2.dump(4));
-  Deserializer<BinaryReader> reader(U"resources/therac_ui.bin");
-  Array<Array<std::pair<String, TheracConfig::TheracTextType>>> ui_widgets;
-  reader(ui_widgets);
+  //  Deserializer<BinaryReader> reader(U"resources/therac_ui.bin");
   
-  auto ui_widgets_ = ui_widgets.map([](Array<std::pair<String,TheracConfig::TheracTextType>> v) -> Array<std::pair<std::string,TheracConfig::TheracTextType>>{
-      return v.map([](std::pair<String,TheracConfig::TheracTextType> v_){
-          return std::pair<std::string,TheracConfig::TheracTextType>{std::get<0>(v_).toUTF8(),std::get<1>(v_)};
-      });
-  });
-  nlohmann::json ok4{ui_widgets_};
-  TextWriter w_ui_widgets{U"resources/stage1/therac_ui.json"};
-  w_ui_widgets.writeUTF8(ok4.dump(4));
   //  std::cout << ok4.dump();
   //std::cout << tile_descriptions_save.dump(true);
   //tile_descriptions_save.save(U"resources/stage1/tile_descriptions.json");
