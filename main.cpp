@@ -6,80 +6,19 @@
 #include <charconv>
 #include <codecvt>
 #include <entt/entt.hpp>
-
-class StageMap {
-public:
-  int32 map_tile_size_x;
-  int32 map_tile_size_y;
-  int32 map_tileset_x;
-  int32 map_tileset_y;
-
-  StageMap(String path, tson::Vector2i tileset_dimensions,
-           tson::Vector2i tile_dimensions = tson::Vector2i{16, 16})
-      : m_base{path} {
-    map_tile_size_x = tile_dimensions.x;
-    map_tile_size_y = tile_dimensions.y;
-    map_tileset_x = tileset_dimensions.x / map_tile_size_x;
-    map_tileset_y = tileset_dimensions.y / map_tile_size_y;
-  }
-
-  TextureRegion get(int32 tileIndex) const {
-    auto tileAdjusted = tileIndex - 1;
-    const int32 x = ((tileAdjusted) % (map_tileset_x)) * map_tile_size_x;
-    const int32 y = ((tileAdjusted) / (map_tileset_x)) * map_tile_size_y;
-
-    return m_base(x, y, map_tile_size_x);
-  }
-
-private:
-  Texture m_base;
-};
-
-namespace GammeOntology {
-// eg wall, floor, every static tile
-struct Fungible {
-  Array<std::variant<std::monostate, Vec2, Float3>>
-      instance_coords; // where in the world things like this reside
-    // because Tiled is an unbelievably bad program this is in pixels
-    // If I stored them in a "tile layer" then I would have to MIX pixels and positions in grid, but there's no good reason to use the "tile layer" mode other than being naive
-};
-struct Object {
-    uint32_t const unique_gid;
-    String const name; // instead of storing aliases use other properties ?
-    Optional<String const>
-    descr; // basic description to be expanded by other properties
-};
-struct Container {
-    std::stack<entt::entity> contents;
-};
-struct Inanimate{};
-struct Inventory {
-  Array<entt::entity> contents;
-};
-enum ActorController {
-    ControllerAI,
-    ControllerHuman
-};
-struct Actor {
-    ActorController controller;
-};
-struct Coords2D {
-  Vec2 c;
-};
-struct Coords3D {
-  Float3 c;
-};
-enum ActualLayerType {
-    LayerStatic,
-    LayerInteractive,
-    LayerActors
-};
-} // namespace GammeOntology
-
+#include <GammeOntology.h>
+#include <Scene2D/StageMap.hpp>
+#include "ww898/cp_utf32.hpp"
+#include "ww898/cp_utf8.hpp"
+#include "ww898/utf_selector.hpp"
+#include "ww898/utf_converters.hpp"
+#include "TheracConfig.h"
+//#include <Siv3D/ThirdParty/parallel_hashmap/phmap_dump.h>
 void Main() {
   int32 fps;
   entt::registry registry;
-  HashTable<String, class String> tile_descriptions{
+  
+  HashTable<String, String> tile_descriptions{
        {U"cheap-carpeting",U"the cheapest fitted carpeting available"}
       ,{U"thin-wall",U"you're not sure whether the building code allows load-bearing plaster walls"}
       ,{U"coin-door",U"a door with a simple coin-operated locking mechanism"}
@@ -92,6 +31,39 @@ void Main() {
       ,{U"player-coin-door",U"your very own door with a simple coin-operated locking mechanism"}
       
   };
+  
+  //tile_descriptions.phmap_dump(U"resources/stage1/tile_descriptions.json");
+  //  nlohmann::json tile_descriptions_save{tile_descriptions};
+  //  JSON tile_descriptions_save{tile_descriptions};
+  std::map<std::string,std::string> ok;
+  std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> conv;  
+  
+  for(auto [k,v]: tile_descriptions) {
+      ok[k.toUTF8()] = v.toUTF8();
+  }
+  nlohmann::json ok2{ok};
+  //  JSON ok3{ok};
+  //ok2.save(U"resources/stage1/tile_descriptions.json");
+  TextWriter w_tile_descs{U"resources/stage1/tile_descriptions.json"};
+  w_tile_descs.writeUTF8(ok2.dump(4));
+  Deserializer<BinaryReader> reader(U"resources/therac_ui.bin");
+  Array<Array<std::pair<String, TheracConfig::TheracTextType>>> ui_widgets;
+  reader(ui_widgets);
+  
+  auto ui_widgets_ = ui_widgets.map([](Array<std::pair<String,TheracConfig::TheracTextType>> v) -> Array<std::pair<std::string,TheracConfig::TheracTextType>>{
+      return v.map([](std::pair<String,TheracConfig::TheracTextType> v_){
+          return std::pair<std::string,TheracConfig::TheracTextType>{std::get<0>(v_).toUTF8(),std::get<1>(v_)};
+      });
+  });
+  nlohmann::json ok4{ui_widgets_};
+  TextWriter w_ui_widgets{U"resources/stage1/therac_ui.json"};
+  w_ui_widgets.writeUTF8(ok4.dump(4));
+  //  std::cout << ok4.dump();
+  //std::cout << tile_descriptions_save.dump(true);
+  //tile_descriptions_save.save(U"resources/stage1/tile_descriptions.json");
+  //  tile_descriptions_save.save(U"resources/stage1/tile_descriptions.json");
+  //JSON tile_descriptions_load{U"resources/stage1/tile_descriptions.json"};
+  //HashTable<String,String> tile_descriptions = tile_descriptions_load.get<HashTable<String,String>>();
   auto main_monitor = System::GetCurrentMonitor();
   auto const mms = main_monitor.fullscreenResolution;
   Window::SetStyle(WindowStyle::Frameless);
@@ -99,7 +71,7 @@ void Main() {
   Window::Maximize();
 
   tson::Tileson tileson_nlohmann{std::make_unique<tson::NlohmannJson>()};
-  auto stage1 = tileson_nlohmann.parse("resources/stage1.tmj");
+  auto stage1 = tileson_nlohmann.parse("resources/stage1/stage1.tmj");
 
   if (stage1->getStatus() == tson::ParseStatus::OK) {
 
@@ -115,7 +87,7 @@ void Main() {
                      stage1_tile_size};
   namespace gq = GammeOntology;
   auto stage1tileset = stage1->getTilesets()[0];
-  std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> conv;
+
   auto parse_layers = [&registry,&conv,&stage1tileset,&tile_descriptions] (tson::Layer & l,gq::ActualLayerType lt) {
       for(auto &tileobj : l.getObjects()) {
           
@@ -161,8 +133,6 @@ void Main() {
               registry.emplace<gq::Coords2D>(entity, coords);
               break;
           }
-          Console << tilename;
-          Console << tiledesc;
       }
   };
 
