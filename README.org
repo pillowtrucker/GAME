@@ -56,7 +56,40 @@ No
     - embedding my own Spineless-Tagless Graph-reducing-machine with a multithreaded concurrent runtime and STM - only SPJ knows how to do that. Also this is just making a game in haskell.
     - embedding one of those strict ML machines - I might actually be capable of doing one of the earlier simpler ones but I don't know if it would be useful. (this is also basically what swarm-game guys are doing but a slightly different abstract machine)
     - I think this + the other comments in this README is the entire list of things I've wasted time on this year. Other than the 777 hours of Elden Ring, of which I am only partially proud.
-  - probably more, I gave lots of github stars to things I thought I could use
+    - probably more, I gave lots of github stars to things I thought I could use
+    - I'm using `Tiled` for editing tiles but please DO NOT USE THAT PIECE OF SHIT SOFTWARE. It feels like a troll. It has to be intentionally this bad.
+ #+BEGIN_RANT
+09:16:13    @pillowtrucker | you can create a "tile layer" which just dumps the ids of the tiles in the tileset without any other information in
+                           | them, for example the name of the tile
+09:16:27    @pillowtrucker | it also makes accessing them entirely different than other modes
+09:16:47    @pillowtrucker | their position is their position in the grid, not absolute pixels
+09:16:53    @pillowtrucker | unlike all the other modes
+09:17:06    @pillowtrucker | ok so you're sick of that nonsense and you make an object layer
+09:18:41    @pillowtrucker | there is a convenient getTileObjects present
+09:18:49    @pillowtrucker | surely that's how you access tiles in the object layer
+09:18:53    @pillowtrucker | WRONG
+09:19:04    @pillowtrucker | the tiles in the object layer are not tile objects
+09:19:09    @pillowtrucker | they are tiles of object unknown
+09:19:24    @pillowtrucker | and now their position is in pixels
+09:19:48    @pillowtrucker | i feel like the Benny Hill theme should be running every time i have to interact with this thing in any way
+09:20:08    @pillowtrucker | just the fact alone that the editor uses 100% of a cpu core regardless of what you're doing with it should be
+                           | disqualifying
+09:20:13    @pillowtrucker | but all the itch devs swear by this thing
+09:20:15    @pillowtrucker | i hate them
+09:20:56    @pillowtrucker | i will not put any more data in there than absolutely necessary
+09:21:21    @pillowtrucker | i think the 'type' of tile (which is named 'class' in the editor but not in its output file btw)
+09:21:35    @pillowtrucker | and the 'name' (this is actually the one field that is consistent) of unique objects
+09:21:49    @pillowtrucker | and of course the position on screen and location in sprite sheet
+09:21:59    @pillowtrucker | that's everything that i have to dump there
+09:22:41    @pillowtrucker | i could theoretically hardcode the numbers and names in an entirely different place but i dont want to know in what
+                           | circumstances it will decide to change the ids
+09:22:53    @pillowtrucker | oh yeah the ids in the tile layer thing are just ids
+09:22:57    @pillowtrucker | and that's fine
+09:23:06    @pillowtrucker | but in object layers they mean something different
+09:23:12    @pillowtrucker | they're just an ordering of the objects
+09:23:24    @pillowtrucker | and "gid" becomes what "id" was in the other mode
+09:23:29    @pillowtrucker | absolutely catastrophic piece of software
+#+END_RANT
 ** TODOs for the near future
   1. Liberate the Therac UI control program (keyboard_handler) from Unreal.
   2. Set up a scene for the therac minigame using the meshes I had set up in UE
