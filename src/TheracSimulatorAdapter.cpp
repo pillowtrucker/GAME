@@ -6,14 +6,21 @@ void TheracSimulatorAdapter::hs_init(String args) {
     int argc = _argv.size();
     char *** argv = new char ** [argc];
     int i = 0;
+    char** bargv = new char*[argc+1];
+    argv[argc] = nullptr;
+    
     for(auto hng: _argv) {
+        for (i = 0; i < argc; i++) { bargv[i] = new char[hng.length()+1]; strcpy(bargv[i], hng.toUTF8().c_str()); }
+        /*
         argv[i] = (char **) malloc(sizeof(char *));
         *argv[i] = (char *) malloc(sizeof(char)* hng.length()+1);
         strcpy(*argv[i],hng.toUTF8().c_str());
-        std::cout << **argv[i];
+        *((*argv[i])+hng.length()) = '\0';
+        std::cout << *argv[i];
         ++i;
+        */
     }
-    ::hs_init(&argc, argv);
+    ::hs_init(&argc, &bargv);
     wrapped_comms = ::startMachine();
 }
 TheracSimulatorAdapter::TheracSimulatorAdapter() { hs_init(); }
