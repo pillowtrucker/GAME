@@ -47,7 +47,8 @@ public:
     SimpleTable & grid;
     String name;
     uint32_t max_chars = 200;
-    bool lock = false;
+    bool jump_lock = false;
+    bool autofill_lock = false;
     TheracConfigWidget * prev_field;
     void finish_setup();
     void mangle();

@@ -108,31 +108,29 @@ void TheracConfigWidget::enforce_int()
 void TheracConfigWidget::mangle()
 {
     tes.text.uppercase();
-    if(enabled && tes.active)
-    {
-        if(next_field != nullptr && (tes.tabKey || tes.enterKey || KeyDown.up()) && !lock)
-        {
-            tes.active = false;
-            next_field->tes.active = true;
-            next_field->lock = true;
-        } else if (prev_field != nullptr && KeyUp.up() && !lock)
-        {
-            tes.active = false;
-            prev_field->tes.active = true;
-            prev_field->lock = true;
-        }
-        else            
-            lock = false;
-    }
-        switch(text_field_type)
+    
+    switch(text_field_type)
     {
     case FloatSrc:
         floatify();
         break;
     case FloatDest:
         floatify();
-        if((tes.tabKey || tes.enterKey || KeyDown.up() || KeyUp.up()) && U"{:.7f}"_fmt(0.0) == tes.text)
-            tes.text = std::get<TheracConfigFloatDest*>(my_data)->source_input.tes.text;
+        if(enabled && tes.active) {
+            if((tes.tabKey || tes.enterKey || KeyDown.up()) && U"{:.7f}"_fmt(0.0) == tes.text && !autofill_lock)
+            {
+                tes.text = std::get<TheracConfigFloatDest*>(my_data)->source_input.tes.text;
+                if(next_field != nullptr && next_field->text_field_type == FloatDest)
+                {
+                    next_field->autofill_lock = true;
+                    
+                }
+                
+            }
+            else {
+                autofill_lock = false;
+            }
+        }
         break;
     case BeamEnergy:
         enforce_int();
@@ -162,7 +160,25 @@ void TheracConfigWidget::mangle()
     case Reason:
     case Normal:
     case Subsys:
-          break;
+        break;
+    }
+        if(enabled && tes.active)
+        {
+            if(next_field != nullptr && (tes.tabKey || tes.enterKey || KeyDown.up()) && !jump_lock)
+            {
+                tes.active = false;
+                next_field->tes.active = true;
+                next_field->jump_lock = true;
+                next_field->autofill_lock = true;
+            } else if (prev_field != nullptr && KeyUp.up() && !jump_lock)
+            {
+                tes.active = false;
+                prev_field->tes.active = true;
+                prev_field->jump_lock = true;
+                next_field->autofill_lock = true;
+            }
+            else            
+                jump_lock = false;
     }
 }
 TheracConfig::TheracConfig(FilePath p) {
