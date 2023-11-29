@@ -1,5 +1,4 @@
 #include "OpenSiv3D/Siv3D/src/ThirdParty/nlohmann/json.hpp"
-#include "ww898/utf_converters.hpp"
 #include <Scene2D/TileDescriptions.hpp>
 
 namespace scene2d {
@@ -23,7 +22,7 @@ HashTable<String,String> load_tile_descriptions() {
   std::map<std::string,std::string> tile_descs__ = tile_descs_[0];
   HashTable<String,String> tile_descs;
   for(auto [k,v]: tile_descs__) {
-      tile_descs.emplace(ww898::utf::conv<char32_t>(k),ww898::utf::conv<char32_t>(v));
+      tile_descs.emplace(Unicode::FromUTF8(k),Unicode::FromUTF8(v));
    }
   r_tile_descs.close();
   return tile_descs;

@@ -1,6 +1,5 @@
 #include "TheracConfig.h"
 #include "OpenSiv3D/Siv3D/src/ThirdParty/nlohmann/json.hpp"
-#include "ww898/utf_converters.hpp"
 #include <Siv3D.hpp>
 namespace TheracConfig
 {
@@ -187,13 +186,10 @@ void TheracConfig::save_ui_widgets() {
 void TheracConfig::load_ui_widgets() {
   
   TextReader r_therac_ui{widget_config_filepath};
-  nlohmann::json ok3 = nlohmann::json::parse(r_therac_ui.readAll().toUTF8());
-
-  // I don't know why there's an extra array in the output but that seems to happen consistently, w/e
-  Array<Array<std::pair<std::string, TheracTextType>>> ui_widgets_ = ok3[0];
-  ui_widgets = ui_widgets_.parallel_map([](Array<std::pair<std::string,TheracTextType>> v) ->  Array<std::pair<String, TheracTextType>>{
-      return v.map([](std::pair<std::string,TheracTextType> v_){
-          return std::pair<String,TheracTextType>{String{ww898::utf::conv<char32_t>(std::get<0>(v_))},std::get<1>(v_)};
+  Array<Array<std::pair<std::string, TheracTextType>>> widgets_u8 = nlohmann::json::parse(r_therac_ui.readAll().toUTF8())[0];
+  ui_widgets = widgets_u8.parallel_map([](auto v) ->  Array<std::pair<String, TheracTextType>>{
+          return v.map([](auto v_){
+              return std::pair<String,TheracTextType>{Unicode::FromUTF8(std::get<0>(v_)),std::get<1>(v_)};
       });
   });
   r_therac_ui.close();

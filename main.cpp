@@ -4,14 +4,10 @@
 #include "tileson/tileson.hpp"
 #include <Siv3D.hpp>
 #include <charconv>
-#include <codecvt>
+
 #include <entt/entt.hpp>
 #include <GammeOntology.h>
 #include <Scene2D/StageMap.hpp>
-#include "ww898/cp_utf32.hpp"
-#include "ww898/cp_utf8.hpp"
-#include "ww898/utf_selector.hpp"
-#include "ww898/utf_converters.hpp"
 #include "TheracConfig.h"
 #include <Scene2D/TileDescriptions.hpp>
 #include <Scene2D/LayerParsing.hpp>

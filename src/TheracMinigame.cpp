@@ -35,10 +35,10 @@ void TheracMinigame() {
   Window::Maximize();
   Scene::SetBackground(background_colour);
   namespace tc = TheracConfig;
-//  Deserializer<BinaryReader> reader(U"resources/therac_ui.bin");
+
   tc::TheracConfig the_tc{};
   Array<Array<std::pair<String, tc::TheracTextType>>> ui_widgets;
-//  reader(ui_widgets);
+
   ui_widgets = the_tc.ui_widgets;
   HashTable<String, tc::TheracTextType> widget_types;
 

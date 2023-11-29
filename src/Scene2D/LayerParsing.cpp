@@ -1,5 +1,3 @@
-
-#include "ww898/utf_converters.hpp"
 #include <Scene2D/LayerParsing.hpp>
 namespace scene2d {
 //namespace gq = GammeOntology;
@@ -8,8 +6,8 @@ void parse_layers(tson::Layer & l,gq::ActualLayerType lt, entt::registry& regist
           
           Vec2 coords{tileobj.getPosition().x,tileobj.getPosition().y};
           auto entity = registry.create();
-          String tilename = ww898::utf::conv<char32_t>(tileset.getTile(tileobj.getGid())->getType());
-          String unique_tile_name  = ww898::utf::conv<char32_t>(tileobj.getName());
+          String tilename = Unicode::FromUTF8(tileset.getTile(tileobj.getGid())->getType());
+          String unique_tile_name  = Unicode::FromUTF8(tileobj.getName());
           Optional<String const> tiledesc = none;
           if(!(tile_descriptions.find(tilename) == tile_descriptions.end())){
               tiledesc.emplace(tile_descriptions[tilename]);
