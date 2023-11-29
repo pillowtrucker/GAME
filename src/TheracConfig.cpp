@@ -6,8 +6,8 @@ namespace TheracConfig
 
 TheracConfigWidget::TheracConfigWidget(String _name, Point _p_in_grid, SimpleTable &_grid,
                            TextEditState _tes,
-                           HashTable<String, TheracTextType> & types)
-    : p_in_grid{_p_in_grid}, tes{_tes}, grid{_grid},name{_name} {
+                                       HashTable<String, TheracTextType> & types, thsAdapter::TheracSimulatorAdapter& _tsa)
+    : p_in_grid{_p_in_grid}, tes{_tes}, grid{_grid},name{_name},tsa{_tsa} {
       text_field_type = types[name];
 
 }
@@ -142,24 +142,30 @@ void TheracConfigWidget::mangle()
     case Verifier:
         verify_floats();
         break;
-    case Date:
-        
+    case Date:        
         break;
     case Time:
         tes.text = DateTime::Now().format(U"HH:mm:ss");
         break;
     case OID:
-        
         break;
     case TreatPhase:
+        tes.text = tsa.requestStateInfo(thsAdapter::RequestTreatmentState);
+        break;
     case BeamMode:
+        tes.text = tsa.requestStateInfo(thsAdapter::RequestBeamMode);
         break;
     case CmdEntry:
         break;
     case Const:
+        break;
     case Reason:
+        tes.text = tsa.requestStateInfo(thsAdapter::RequestReason);
+        break;
     case Normal:
+        break;
     case Subsys:
+        tes.text = tsa.requestStateInfo(thsAdapter::RequestActiveSubsystem);
         break;
     }
         if(enabled && tes.active)

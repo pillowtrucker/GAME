@@ -1,6 +1,7 @@
 #include <Siv3D.hpp>
 #include "TheracConfig.h"
 #include "UnfriendlyTextBox.h"
+#include "TheracSimulatorAdapter.hpp"
 void TheracMinigame() {
   auto background_colour = Palette::Black;
   auto main_monitor = System::GetCurrentMonitor();
@@ -53,15 +54,18 @@ void TheracMinigame() {
     grid.push_back_row(label_row);
   });
   auto actual_row_height = grid.height() / grid.rows();
+
+  thsAdapter::TheracSimulatorAdapter tsa;
+  
   HashTable<String, tc::TheracConfigWidget *> dynamic_widgets;
 
   grid.items().each_index(
-      [&widget_types, &dynamic_widgets, &grid, transparent](auto i, auto v) {
+      [&widget_types, &dynamic_widgets, &grid, transparent,&tsa](auto i, auto v) {
         if (v.text.starts_with(U"PL")) {
           auto name = v.text;
           TextEditState tes;
           tc::TheracConfigWidget *thc =
-              new tc::TheracConfigWidget{name, i, grid, tes, widget_types};
+              new tc::TheracConfigWidget{name, i, grid, tes, widget_types,tsa};
 
           dynamic_widgets.insert({name, thc});
           grid.setTextColor(i.y, i.x, transparent);

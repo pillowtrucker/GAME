@@ -1,3 +1,4 @@
+#include "TheracSimulatorAdapter.hpp"
 #include "UnfriendlyTextBox.h"
 #include <Siv3D.hpp>
 namespace TheracConfig
@@ -37,7 +38,7 @@ enum TheracTextType
 class TheracConfigWidget
 {
 public:
-    TheracConfigWidget(String name, Point _p_in_grid,SimpleTable & grid, TextEditState _tes, HashTable<String, TheracTextType> & types);
+    TheracConfigWidget(String name, Point _p_in_grid,SimpleTable & grid, TextEditState _tes, HashTable<String, TheracTextType> & types, thsAdapter::TheracSimulatorAdapter& _tsa);
     TheracTextType text_field_type;
     Point p_in_grid;
     TextEditState tes;
@@ -58,6 +59,7 @@ private:
     void verify_floats();
     void floatify();
     void enforce_int();
+    thsAdapter::TheracSimulatorAdapter & tsa;
 
 };
 class TheracConfig {
