@@ -5,15 +5,16 @@ namespace TheracConfig
 struct TheracConfigVerifier;
 struct TheracConfigFloatDest;
 class TheracConfig;
+class TheracConfigWidget;
 
 struct TheracConfigFloatDest {
-    TheracConfig & source_input;
+    TheracConfigWidget & source_input;
 };
 
 struct TheracConfigVerifier
 {
-    TheracConfig & source_input;
-    TheracConfig & dest_input;
+    TheracConfigWidget & source_input;
+    TheracConfigWidget & dest_input;
 };    
 enum TheracTextType
 {
@@ -33,30 +34,40 @@ enum TheracTextType
     Normal, //13
     Subsys, //14
 };
-class TheracConfig
+class TheracConfigWidget
 {
 public:
-    TheracConfig(String name, Point _p_in_grid,SimpleTable & grid, TextEditState _tes, HashTable<String, TheracTextType> & types);
+    TheracConfigWidget(String name, Point _p_in_grid,SimpleTable & grid, TextEditState _tes, HashTable<String, TheracTextType> & types);
     TheracTextType text_field_type;
     Point p_in_grid;
     TextEditState tes;
-    TheracConfig * next_field;
+    TheracConfigWidget * next_field;
     bool enabled = false;
-    Optional<HashTable<String, TheracConfig*>> dynamic_widgets;
+    Optional<HashTable<String, TheracConfigWidget*>> dynamic_widgets;
     SimpleTable & grid;
     String name;
     uint32_t max_chars = 200;
     bool lock = false;
-    TheracConfig * prev_field;
+    TheracConfigWidget * prev_field;
     void finish_setup();
     void mangle();
     std::variant<std::monostate,TheracConfigVerifier*,TheracConfigFloatDest*> my_data;
-    void save_ui_widgets();
-    void load_ui_widgets();
+
 private:
     void verify_floats();
     void floatify();
     void enforce_int();
-    Array<Array<std::pair<String, TheracTextType>>> ui_widgets;
+
 };
+class TheracConfig {
+public:
+    TheracConfig(Array<Array<std::pair<String, TheracTextType>>> ui_widgets_): ui_widgets{ui_widgets_}{};
+    TheracConfig(FilePath p);
+    TheracConfig();
+    void save_ui_widgets();
+    void load_ui_widgets();
+    Array<Array<std::pair<String, TheracTextType>>> ui_widgets;
+private:
+    FilePath widget_config_filepath = U"resources/stage1/therac_ui.json";
+};    
 } // namespace TheracConfig

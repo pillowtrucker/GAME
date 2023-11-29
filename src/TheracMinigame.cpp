@@ -35,10 +35,11 @@ void TheracMinigame() {
   Window::Maximize();
   Scene::SetBackground(background_colour);
   namespace tc = TheracConfig;
-  Deserializer<BinaryReader> reader(U"resources/therac_ui.bin");
+//  Deserializer<BinaryReader> reader(U"resources/therac_ui.bin");
+  tc::TheracConfig the_tc{};
   Array<Array<std::pair<String, tc::TheracTextType>>> ui_widgets;
-  reader(ui_widgets);
-
+//  reader(ui_widgets);
+  ui_widgets = the_tc.ui_widgets;
   HashTable<String, tc::TheracTextType> widget_types;
 
   ui_widgets.each([&grid, &widget_types](
@@ -52,15 +53,15 @@ void TheracMinigame() {
     grid.push_back_row(label_row);
   });
   auto actual_row_height = grid.height() / grid.rows();
-  HashTable<String, tc::TheracConfig *> dynamic_widgets;
+  HashTable<String, tc::TheracConfigWidget *> dynamic_widgets;
 
   grid.items().each_index(
       [&widget_types, &dynamic_widgets, &grid, transparent](auto i, auto v) {
         if (v.text.starts_with(U"PL")) {
           auto name = v.text;
           TextEditState tes;
-          tc::TheracConfig *thc =
-              new tc::TheracConfig{name, i, grid, tes, widget_types};
+          tc::TheracConfigWidget *thc =
+              new tc::TheracConfigWidget{name, i, grid, tes, widget_types};
 
           dynamic_widgets.insert({name, thc});
           grid.setTextColor(i.y, i.x, transparent);
@@ -77,7 +78,7 @@ void TheracMinigame() {
     grid.items().each_index([&dynamic_widgets, background_colour, column_width,
                              actual_row_height, &myMonoFont](auto i, auto v) {
       if (v.text.starts_with(U"PL")) {
-        tc::TheracConfig &w = *dynamic_widgets[v.text];
+        tc::TheracConfigWidget &w = *dynamic_widgets[v.text];
         mine::UnfriendlyTextBox::TextBox(
             w.tes, Vec2{i.x * column_width, i.y * actual_row_height},
             column_width, w.max_chars, w.enabled, myMonoFont, background_colour,

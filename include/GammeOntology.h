@@ -1,3 +1,4 @@
+#pragma once
 #include <entt/entt.hpp>
 #include <Siv3D.hpp>
 namespace GammeOntology {

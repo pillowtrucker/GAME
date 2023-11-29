@@ -13,47 +13,14 @@
 #include "ww898/utf_selector.hpp"
 #include "ww898/utf_converters.hpp"
 #include "TheracConfig.h"
+#include <Scene2D/TileDescriptions.hpp>
+#include <Scene2D/LayerParsing.hpp>
 //#include <Siv3D/ThirdParty/parallel_hashmap/phmap_dump.h>
 void Main() {
   int32 fps;
   entt::registry registry;
-  
-  HashTable<String, String> tile_descriptions{
-       {U"cheap-carpeting",U"the cheapest fitted carpeting available"}
-      ,{U"thin-wall",U"you're not sure whether the building code allows load-bearing plaster walls"}
-      ,{U"coin-door",U"a door with a simple coin-operated locking mechanism"}
-      ,{U"broken-coin-door",U"the remains of a coin-operated door"}
-      ,{U"cheap-mattress",U"an inexpensive, barely-used second-hand mattress"}
-      ,{U"toilet",U"a toilet"}
-      ,{U"shower",U"a showerhead nozzle embedded in the ceiling"}
-      ,{U"the-player",U"You"}
-      ,{U"the-bus-stop",U"the bus runs between the hospital and your hovel every 12 hours"}
-      ,{U"player-coin-door",U"your very own door with a simple coin-operated locking mechanism"}
-      
-  };
-  
-  //tile_descriptions.phmap_dump(U"resources/stage1/tile_descriptions.json");
-  //  nlohmann::json tile_descriptions_save{tile_descriptions};
-  //  JSON tile_descriptions_save{tile_descriptions};
-  std::map<std::string,std::string> ok;
-  std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> conv;  
-  
-  for(auto [k,v]: tile_descriptions) {
-      ok[k.toUTF8()] = v.toUTF8();
-  }
-  nlohmann::json ok2{ok};
-  //  JSON ok3{ok};
-  //ok2.save(U"resources/stage1/tile_descriptions.json");
-  TextWriter w_tile_descs{U"resources/stage1/tile_descriptions.json"};
-  w_tile_descs.writeUTF8(ok2.dump(4));
-  //  Deserializer<BinaryReader> reader(U"resources/therac_ui.bin");
-  
-  //  std::cout << ok4.dump();
-  //std::cout << tile_descriptions_save.dump(true);
-  //tile_descriptions_save.save(U"resources/stage1/tile_descriptions.json");
-  //  tile_descriptions_save.save(U"resources/stage1/tile_descriptions.json");
-  //JSON tile_descriptions_load{U"resources/stage1/tile_descriptions.json"};
-  //HashTable<String,String> tile_descriptions = tile_descriptions_load.get<HashTable<String,String>>();
+
+  auto tile_descriptions = scene2d::load_tile_descriptions();
   auto main_monitor = System::GetCurrentMonitor();
   auto const mms = main_monitor.fullscreenResolution;
   Window::SetStyle(WindowStyle::Frameless);
@@ -78,57 +45,11 @@ void Main() {
   namespace gq = GammeOntology;
   auto stage1tileset = stage1->getTilesets()[0];
 
-  auto parse_layers = [&registry,&conv,&stage1tileset,&tile_descriptions] (tson::Layer & l,gq::ActualLayerType lt) {
-      for(auto &tileobj : l.getObjects()) {
-          
-          Vec2 coords{tileobj.getPosition().x,tileobj.getPosition().y};
-          auto entity = registry.create();
-          String tilename = conv.from_bytes(stage1tileset.getTile(tileobj.getGid())->getType());
-          String unique_tile_name  = conv.from_bytes(tileobj.getName());
-          Optional<String const> tiledesc = none;
-          if(!(tile_descriptions.find(tilename) == tile_descriptions.end())){
-              tiledesc.emplace(tile_descriptions[tilename]);
-          }
-          if(unique_tile_name.length() > 0){
-              tilename = unique_tile_name;
-          }
-          if(!(tile_descriptions.find(unique_tile_name) == tile_descriptions.end())){
-              tiledesc.emplace(tile_descriptions[unique_tile_name]);
-          }
-          registry.emplace<gq::Object>(entity,gq::Object{.unique_gid = tileobj.getGid(),.name = tilename, .descr = tiledesc});
-          std::variant<std::monostate, Vec2, Float3> extra_coords;
-          auto contr = gq::ControllerAI;
-          switch(lt) {
-          case gq::LayerStatic:
-              extra_coords = coords;
-              registry.emplace<gq::Fungible>(
-                  entity, gq::Fungible{.instance_coords = Array{extra_coords}});
-              for (auto [ent, fung, obj] : registry.view<gq::Fungible,gq::Object>().each()) {
-                  if (obj.unique_gid == tileobj.getGid() && ent != entity) {
-                      fung.instance_coords.push_back(extra_coords);
-                      registry.destroy(entity);
-      }
-    }
-              break;
+  
 
-          case gq::LayerActors:
-              if (tilename == U"the-player")
-                  contr = gq::ControllerHuman;
-              registry.emplace<gq::Actor>(entity, contr);
-              registry.emplace<gq::Inventory>(entity, Array<entt::entity>{});
-              registry.emplace<gq::Coords2D>(entity, coords);
-              break;
-          case gq::LayerInteractive:
-              registry.emplace<gq::Inanimate>(entity);
-              registry.emplace<gq::Coords2D>(entity, coords);
-              break;
-          }
-      }
-  };
-
-  parse_layers(*stage1->getLayer("Static Tile Ents"), gq::LayerStatic);
-  parse_layers(*stage1->getLayer("Interactive Ents"), gq::LayerInteractive);
-  parse_layers(*stage1->getLayer("Actor Ents"), gq::LayerActors);
+  scene2d::parse_layers(*stage1->getLayer("Static Tile Ents"), gq::LayerStatic,registry,stage1tileset,tile_descriptions);
+  scene2d::parse_layers(*stage1->getLayer("Interactive Ents"), gq::LayerInteractive,registry,stage1tileset,tile_descriptions);
+  scene2d::parse_layers(*stage1->getLayer("Actor Ents"), gq::LayerActors,registry,stage1tileset,tile_descriptions);
   
   const auto scaling_factor = 4;
   while (System::Update()) {

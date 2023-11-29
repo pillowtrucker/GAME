@@ -5,7 +5,7 @@
 namespace TheracConfig
 {
 
-TheracConfig::TheracConfig(String _name, Point _p_in_grid, SimpleTable &_grid,
+TheracConfigWidget::TheracConfigWidget(String _name, Point _p_in_grid, SimpleTable &_grid,
                            TextEditState _tes,
                            HashTable<String, TheracTextType> & types)
     : p_in_grid{_p_in_grid}, tes{_tes}, grid{_grid},name{_name} {
@@ -14,7 +14,7 @@ TheracConfig::TheracConfig(String _name, Point _p_in_grid, SimpleTable &_grid,
 }
 
 // finish doing setup after all the other widgets are set up
-void TheracConfig::finish_setup()
+void TheracConfigWidget::finish_setup()
 {
     String maybe_next;
     switch (text_field_type) {
@@ -86,7 +86,7 @@ void TheracConfig::finish_setup()
     }
 }
 
-void TheracConfig::verify_floats() {
+void TheracConfigWidget::verify_floats() {
     TheracConfigVerifier& d = *std::get<TheracConfigVerifier*>(my_data);
     if (d.source_input.tes.text == d.dest_input.tes.text)
         tes.text = U"VERIFIED";
@@ -95,18 +95,18 @@ void TheracConfig::verify_floats() {
     
 }
 
-void TheracConfig::floatify()
+void TheracConfigWidget::floatify()
 {
     double x = ParseOpt<double>(tes.text).value_or(0.0);
     tes.text = U"{:.7f}"_fmt(x);
 }
-void TheracConfig::enforce_int()
+void TheracConfigWidget::enforce_int()
 {
     uint32_t x = ParseOpt<uint32_t>(tes.text).value_or(0);
     tes.text = U"{}"_fmt(x);
 }
 
-void TheracConfig::mangle()
+void TheracConfigWidget::mangle()
 {
     tes.text.uppercase();
     if(enabled && tes.active)
@@ -166,6 +166,13 @@ void TheracConfig::mangle()
           break;
     }
 }
+TheracConfig::TheracConfig(FilePath p) {
+    widget_config_filepath = p;
+    load_ui_widgets();
+}
+TheracConfig::TheracConfig() {
+    load_ui_widgets();
+}
 void TheracConfig::save_ui_widgets() {
     auto ui_widgets_ = ui_widgets.parallel_map([](Array<std::pair<String,TheracTextType>> v) -> Array<std::pair<std::string,TheracTextType>>{
       return v.map([](std::pair<String,TheracTextType> v_){
@@ -173,22 +180,23 @@ void TheracConfig::save_ui_widgets() {
       });
   });
   nlohmann::json ok4{ui_widgets_};
-  TextWriter w_ui_widgets{U"resources/stage1/therac_ui.json"};
+  TextWriter w_ui_widgets{widget_config_filepath};
   w_ui_widgets.writeUTF8(ok4.dump(4));
+  w_ui_widgets.close();
 }
 void TheracConfig::load_ui_widgets() {
   
-  TextReader r_therac_ui{U"resources/stage1/therac_ui.json"};
+  TextReader r_therac_ui{widget_config_filepath};
   nlohmann::json ok3 = nlohmann::json::parse(r_therac_ui.readAll().toUTF8());
 
   // I don't know why there's an extra array in the output but that seems to happen consistently, w/e
   Array<Array<std::pair<std::string, TheracTextType>>> ui_widgets_ = ok3[0];
-  auto ui_widgets__ = ui_widgets_.parallel_map([](Array<std::pair<std::string,TheracTextType>> v) ->  Array<Array<std::pair<String, TheracTextType>>>{
+  ui_widgets = ui_widgets_.parallel_map([](Array<std::pair<std::string,TheracTextType>> v) ->  Array<std::pair<String, TheracTextType>>{
       return v.map([](std::pair<std::string,TheracTextType> v_){
           return std::pair<String,TheracTextType>{String{ww898::utf::conv<char32_t>(std::get<0>(v_))},std::get<1>(v_)};
       });
   });
-
+  r_therac_ui.close();
 }
 
 } // namespace TheracConfig
