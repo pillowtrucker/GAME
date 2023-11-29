@@ -7,6 +7,6 @@
 [submodule "entt"]
 	path = entt
 	url = git@github-pillow:pillowtrucker/entt.git
-[submodule "utf-cpp"]
-	path = utf-cpp
-	url = git@github-pillow:pillowtrucker/utf-cpp.git
+[submodule "hstherac25"]
+	path = hstherac25
+	url = git@github-pillow:pillowtrucker/hstherac25.git
