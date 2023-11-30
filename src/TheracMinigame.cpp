@@ -100,18 +100,17 @@ void TheracMinigame() {
                              actual_row_height, &myMonoFont,&evs](auto i, auto v) {
       if (v.text.starts_with(U"PL")) {
         tc::TheracConfigWidget &w = *dynamic_widgets[v.text];
+
         mine::UnfriendlyTextBox::TextBox(
             w.tes, Vec2{i.x * column_width, i.y * actual_row_height},
             column_width, w.max_chars, w.enabled, myMonoFont, background_colour,
-            actual_row_height);
-
+            actual_row_height); // this is not thread-safe/reentrant due to some siv3d font dingdong breaking
         if(evs.find(v.text) != evs.end()) {
-            auto& ev = evs[v.text];
+            auto ev = evs[v.text];
             if(ev.get()->isSignalled())
             {
                 ev.get()->clear();
-
-                marl::schedule([=,&w,&ev]()
+                marl::schedule([=,&w]()
                 {
                     defer(ev.get()->signal());
                     w.mangle();
