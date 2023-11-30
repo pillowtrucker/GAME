@@ -10,3 +10,6 @@
 [submodule "hstherac25"]
 	path = hstherac25
 	url = git@github-pillow:pillowtrucker/hstherac25.git
+[submodule "marl"]
+	path = marl
+	url = git@github-pillow:pillowtrucker/marl.git

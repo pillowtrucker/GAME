@@ -20,6 +20,9 @@ void TheracConfigWidget::finish_setup()
         
     case BeamMode:
         break;
+    case BeamEnergyOut:
+        max_chars = 5;
+        break;
     case BeamEnergy:
       max_chars = 5;
       enabled = true;
@@ -72,7 +75,7 @@ void TheracConfigWidget::finish_setup()
           next_field->prev_field = this;
       }
       break;
-    case SingleChar:
+    case BeamModeInput:
       max_chars = 1;
       enabled = true;
       next_field = dynamic_widgets.value()[U"PLACEHOLDER_EN"];
@@ -135,7 +138,12 @@ void TheracConfigWidget::mangle()
     case BeamEnergy:
         enforce_int();
         break;
-    case SingleChar: // beam mode input
+    case BeamEnergyOut:
+        enforce_int();
+        
+        tes.text = tsa.get()->requestStateInfo(thsAdapter::RequestBeamEnergy);
+        break;
+    case BeamModeInput: // beam mode input
         if(tes.text == U"X")
             next_field->tes.text = U"25000";
         break;

@@ -1,8 +1,16 @@
 #include <Siv3D.hpp>
+#include <future>
 #include "TheracConfig.h"
 #include "UnfriendlyTextBox.h"
 #include "TheracSimulatorAdapter.hpp"
+#include "marl/defer.h"
+#include "marl/event.h"
+#include "marl/scheduler.h"
+#include "marl/waitgroup.h"
 void TheracMinigame() {
+    marl::Scheduler scheduler(marl::Scheduler::Config::allCores());
+  scheduler.bind();
+  defer(scheduler.unbind());
   auto background_colour = Palette::Black;
   auto main_monitor = System::GetCurrentMonitor();
   auto const mms = main_monitor.fullscreenResolution;
@@ -58,7 +66,7 @@ void TheracMinigame() {
   auto tsa = std::make_shared<thsAdapter::TheracSimulatorAdapter>();
   
   HashTable<String, tc::TheracConfigWidget *> dynamic_widgets;
-
+//  Array<tc::TheracConfigWidget*> para_widget_array; // this approach increased performance from 10fps to 17
   grid.items().each_index(
       [&widget_types, &dynamic_widgets, &grid, transparent,tsa](auto i, auto v) {
         if (v.text.starts_with(U"PL")) {
@@ -66,7 +74,7 @@ void TheracMinigame() {
           TextEditState tes;
           tc::TheracConfigWidget *thc =
               new tc::TheracConfigWidget{name, i, grid, tes, widget_types,tsa};
-
+//          para_widget_array.push_back(thc);
           dynamic_widgets.insert({name, thc});
           grid.setTextColor(i.y, i.x, transparent);
           grid.setBackgroundColor(i.y, i.x, transparent);
@@ -77,20 +85,79 @@ void TheracMinigame() {
     w.second->finish_setup();
   }
 
+  phmap::parallel_flat_hash_map<String, std::shared_ptr<marl::Event>> evs;
+ 
+  
+//  phmap::parallel_flat_hash_map<String, std::thread> fuck;
   while (System::Update()) {
+      ClearPrint();
+//      koo.parallel_each([](auto k) {k->join();});
+//      koo.clear();
+
+      
     grid.draw(Vec2{0, 0});
     grid.items().each_index([&dynamic_widgets, background_colour, column_width,
-                             actual_row_height, &myMonoFont](auto i, auto v) {
+                             actual_row_height, &myMonoFont,&evs](auto i, auto v) {
       if (v.text.starts_with(U"PL")) {
         tc::TheracConfigWidget &w = *dynamic_widgets[v.text];
         mine::UnfriendlyTextBox::TextBox(
             w.tes, Vec2{i.x * column_width, i.y * actual_row_height},
             column_width, w.max_chars, w.enabled, myMonoFont, background_colour,
             actual_row_height);
-        w.mangle();
+
+        if(evs.find(v.text) != evs.end()) {
+            auto& ev = evs[v.text];
+            if(ev.get()->isSignalled())
+            {
+                ev.get()->clear();
+
+                marl::schedule([=,&w,&ev]()
+                {
+                    defer(ev.get()->signal());
+                    w.mangle();
+                });
+                
+                
+            }
+            else {
+                
+            }
+        }
+        else {
+            auto ev = std::make_shared<marl::Event>(marl::Event::Mode::Manual);
+
+            marl::schedule([=,&w]()
+            {
+                defer(ev.get()->signal());
+                w.mangle();
+            });
+            evs[v.text] = ev;
+        }
+        
+        /*
+        if(fuck.find(v.text) != fuck.end()) {
+            auto k = std::move(fuck[v.text]);
+            if(k.joinable()) {
+                k.join();
+                fuck[v.text] = std::thread([&w](){w.mangle();});
+            }
+            else
+            {
+                fuck[v.text] = std::move(k);
+            }
+        }
+        else {
+            fuck[v.text] = std::thread([&w](){w.mangle();});
+        }
+
+        */
       }
     });
+    
+
+    //   auto garbage = para_widget_array.parallel_map([](auto w){w->mangle(); return 0;}); // parallel_each is fucked and Array thinks it needs to return something
     fps = Profiler::FPS();
     Window::SetTitle(fps);
+    Print(fps);
   }
 }

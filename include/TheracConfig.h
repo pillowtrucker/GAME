@@ -22,7 +22,7 @@ enum TheracTextType
     FloatSrc, //0
     FloatDest, //1
     BeamEnergy, //2
-    SingleChar, //3 beam type _input_
+    BeamModeInput, //3 beam type _input_
     Verifier, //4
     Date, //5
     Time, //6
@@ -34,6 +34,7 @@ enum TheracTextType
     Reason, //12
     Normal, //13
     Subsys, //14
+    BeamEnergyOut // 15
 };
 class TheracConfigWidget
 {

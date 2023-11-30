@@ -48,7 +48,7 @@ class TheracSimulatorAdapter {
     
 
 private:
-    void hs_init(String args = U"-threaded -rtsopts=-N");
+    void hs_init(String args = U"-threaded +RTS -N -RTS");
 	void hs_exit();
     HsStablePtr startMachine(void);
     void * wrapped_comms;
