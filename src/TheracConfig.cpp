@@ -2,7 +2,14 @@
 #include "OpenSiv3D/Siv3D/src/ThirdParty/nlohmann/json.hpp"
 #include <Siv3D.hpp>
 namespace TheracConfig {
-
+auto const BEAMTYPE_FIELD = U"PLACEHOLDER_BT";
+auto const UNIT_RATE_P_FIELD = U"PLACEHOLDER_URMP";
+auto const TIME_PRESCRIBED_P_FIELD = U"PLACEHOLDER_TMP";
+auto const GANTRY_ROTATION_P_FIELD = U"PLACEHOLDER_GRP";
+auto const ACCESSORY_NUMBER_P_FIELD = U"PLACEHOLDER_ANP";
+auto const COMMAND_ENTRY_FIELD = U"PLACEHOLDER_CMD";
+auto const BEAM_ENERGY_FIELD = U"PLACEHOLDER_EN";
+auto const PATIENT_NAME_FIELD = U"PLACEHOLDER_PN";
 TheracConfigWidget::TheracConfigWidget(
     String _name, Point _p_in_grid, SimpleTable &_grid, TextEditState _tes,
     HashTable<String, TheracTextType> &types,
@@ -24,7 +31,7 @@ void TheracConfigWidget::finish_setup() {
   case BeamEnergy:
     max_chars = 5;
     enabled = true;
-    next_field = dynamic_widgets.value()[U"PLACEHOLDER_URMP"];
+    next_field = dynamic_widgets.value()[UNIT_RATE_P_FIELD];
     next_field->prev_field = this;
     break;
   case Verifier:
@@ -57,10 +64,10 @@ void TheracConfigWidget::finish_setup() {
     max_chars = 10;
     maybe_next = grid.getItem(Point(p_in_grid.x, p_in_grid.y + 1)).text;
     next_field = dynamic_widgets.value()[maybe_next];
-    if (name == U"PLACEHOLDER_TMP")
-      next_field = dynamic_widgets.value()[U"PLACEHOLDER_GRP"];
-    if (name == U"PLACEHOLDER_ANP")
-      next_field = dynamic_widgets.value()[U"PLACEHOLDER_CMD"];
+    if (name == TIME_PRESCRIBED_P_FIELD)
+      next_field = dynamic_widgets.value()[GANTRY_ROTATION_P_FIELD];
+    if (name == ACCESSORY_NUMBER_P_FIELD)
+      next_field = dynamic_widgets.value()[COMMAND_ENTRY_FIELD];
     next_field->prev_field = this;
     my_data = new TheracConfigFloatDest{
         .source_input =
@@ -69,15 +76,15 @@ void TheracConfigWidget::finish_setup() {
     break;
   case Normal:
     enabled = true;
-    if (name == U"PLACEHOLDER_PN") {
-      next_field = dynamic_widgets.value()[U"PLACEHOLDER_BT"];
+    if (name == PATIENT_NAME_FIELD) {
+      next_field = dynamic_widgets.value()[BEAMTYPE_FIELD];
       next_field->prev_field = this;
     }
     break;
   case BeamModeInput:
     max_chars = 1;
     enabled = true;
-    next_field = dynamic_widgets.value()[U"PLACEHOLDER_EN"];
+    next_field = dynamic_widgets.value()[BEAM_ENERGY_FIELD];
     next_field->prev_field = this;
     break;
   case CmdEntry:
@@ -169,8 +176,10 @@ void TheracConfigWidget::mangle() {
         }
     } else if(tes.text == U"P") {
         tsa.get()->externalCallWrap(thsAdapter::ExtCallProceed);
+        tes.text.clear();
     } else if(tes.text == U"R") {
         tsa.get()->externalCallWrap(thsAdapter::ExtCallReset);
+        tes.text.clear();
     }
     break;
   case Const:
@@ -211,6 +220,41 @@ void TheracConfigWidget::mangle() {
       jump_lock = false;
   }
 }
+thsAdapter::BeamType TheracConfigWidget::translateBeamType() {
+    auto btf = dynamic_widgets.value()[BEAMTYPE_FIELD];
+    if(btf->tes.text == U"X") {
+        return thsAdapter::BeamTypeXRay;
+    } else if(btf->tes.text == U"E") {
+        return thsAdapter::BeamTypeElectron;
+    } else {
+        return thsAdapter::BeamTypeUndefined; // this shouldn't happen, verification thingie should check that first
+    }
+}
+thsAdapter::CollimatorPosition TheracConfigWidget::translateColPos() {
+    auto bt = translateBeamType();
+    switch(bt) {
+    case thsAdapter::_CheekyPadding:
+    case thsAdapter::BeamTypeUndefined:
+        return thsAdapter::CollimatorPositionUndefined;
+        break;
+    case thsAdapter::BeamTypeXRay:
+        return thsAdapter::CollimatorPositionXRay;
+        break;
+    case thsAdapter::BeamTypeElectron:
+        return thsAdapter::CollimatorPositionElectronBeam;
+        break;
+    }
+}
+int TheracConfigWidget::getBeamEnergy() {
+    auto ben = dynamic_widgets.value()[BEAM_ENERGY_FIELD];
+    return ParseOpt<int>(ben->tes.text).value_or(25000); // lol
+}
+/* TODO
+bool TheracConfigWidget::verifyInputComplete() {
+
+
+}
+*/
 TheracConfig::TheracConfig(FilePath p) {
   widget_config_filepath = p;
   load_ui_widgets();
