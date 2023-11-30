@@ -61,7 +61,11 @@ private:
     void floatify();
     void enforce_int();
     std::shared_ptr<thsAdapter::TheracSimulatorAdapter> tsa;
-
+    thsAdapter::BeamType translateBeamType();
+    thsAdapter::CollimatorPosition translateColPos();
+    int getBeamEnergy();
+    bool verifyInputComplete();
+    void MALFUNCTION(int num = 11);
 };
 class TheracConfig {
 public:

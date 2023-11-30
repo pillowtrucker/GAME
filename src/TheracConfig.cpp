@@ -131,7 +131,6 @@ void TheracConfigWidget::mangle() {
     break;
   case BeamEnergyOut:
     enforce_int();
-
     tes.text = tsa.get()->requestStateInfo(thsAdapter::RequestBeamEnergy);
     break;
   case BeamModeInput: // beam mode input
@@ -157,11 +156,30 @@ void TheracConfigWidget::mangle() {
     break;
   case CmdEntry:
     tes.text.uppercase();
+    if(!tes.active)
+        break;
+    if(tes.text == U"T"){
+        if(verifyInputComplete()) {
+            tsa.get()->externalCallWrap(thsAdapter::ExtCallSendMEOS,translateBeamType() , translateColPos(), getBeamEnergy());
+            tsa.get()->externalCallWrap(thsAdapter::ExtCallToggleEditingTakingPlace);
+            tsa.get()->externalCallWrap(thsAdapter::ExtCallToggleDatentComplete);
+            }
+        else {
+            MALFUNCTION();
+        }
+    } else if(tes.text == U"P") {
+        tsa.get()->externalCallWrap(thsAdapter::ExtCallProceed);
+    } else if(tes.text == U"R") {
+        tsa.get()->externalCallWrap(thsAdapter::ExtCallReset);
+    }
     break;
   case Const:
     break;
   case Reason:
     tes.text = tsa.get()->requestStateInfo(thsAdapter::RequestReason);
+    if(tes.text.starts_with(U"M")) {
+        MALFUNCTION(ParseOpt<int>(tes.text.split(' ')[2]).value_or(777));
+    }
     break;
   case Normal:
     tes.text.uppercase();
@@ -178,10 +196,17 @@ void TheracConfigWidget::mangle() {
       next_field->jump_lock = true;
       next_field->autofill_lock = true;
     } else if (prev_field != nullptr && KeyUp.up() && !jump_lock) {
-      tes.active = false;
-      prev_field->tes.active = true;
-      prev_field->jump_lock = true;
-      next_field->autofill_lock = true;
+        if(text_field_type == CmdEntry){
+            if(tes.text == U"T") {
+                tsa.get()->externalCallWrap(thsAdapter::ExtCallToggleEditingTakingPlace);
+                tsa.get()->externalCallWrap(thsAdapter::ExtCallToggleDatentComplete);
+            }
+            tes.text.clear();
+        }
+        tes.active = false;
+        prev_field->tes.active = true;
+        prev_field->jump_lock = true;
+        next_field->autofill_lock = true;
     } else
       jump_lock = false;
   }

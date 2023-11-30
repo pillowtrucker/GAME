@@ -42,8 +42,8 @@ class TheracSimulatorAdapter {
     TheracSimulatorAdapter();
     ~TheracSimulatorAdapter();
     void externalCallWrap(ExtCallType ext_call_type,
-                          BeamType beam_type, CollimatorPosition collimator_position,
-                          HsInt beam_energy);
+                          BeamType beam_type = BeamTypeUndefined, CollimatorPosition collimator_position = CollimatorPositionUndefined,
+                          HsInt beam_energy = 0);
     String requestStateInfo(StateInfoRequest state_info_request);
     
 
