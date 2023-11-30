@@ -55,12 +55,12 @@ void TheracMinigame() {
   });
   auto actual_row_height = grid.height() / grid.rows();
 
-  thsAdapter::TheracSimulatorAdapter tsa;
+  auto tsa = std::make_shared<thsAdapter::TheracSimulatorAdapter>();
   
   HashTable<String, tc::TheracConfigWidget *> dynamic_widgets;
 
   grid.items().each_index(
-      [&widget_types, &dynamic_widgets, &grid, transparent,&tsa](auto i, auto v) {
+      [&widget_types, &dynamic_widgets, &grid, transparent,tsa](auto i, auto v) {
         if (v.text.starts_with(U"PL")) {
           auto name = v.text;
           TextEditState tes;

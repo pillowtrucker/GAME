@@ -38,7 +38,7 @@ enum TheracTextType
 class TheracConfigWidget
 {
 public:
-    TheracConfigWidget(String name, Point _p_in_grid,SimpleTable & grid, TextEditState _tes, HashTable<String, TheracTextType> & types, thsAdapter::TheracSimulatorAdapter& _tsa);
+    TheracConfigWidget(String name, Point _p_in_grid,SimpleTable & grid, TextEditState _tes, HashTable<String, TheracTextType> & types, std::shared_ptr<thsAdapter::TheracSimulatorAdapter> _tsa);
     TheracTextType text_field_type;
     Point p_in_grid;
     TextEditState tes;
@@ -59,7 +59,7 @@ private:
     void verify_floats();
     void floatify();
     void enforce_int();
-    thsAdapter::TheracSimulatorAdapter & tsa;
+    std::shared_ptr<thsAdapter::TheracSimulatorAdapter> tsa;
 
 };
 class TheracConfig {
