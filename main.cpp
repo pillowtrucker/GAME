@@ -11,7 +11,7 @@
 #include "TheracConfig.h"
 #include <Scene2D/TileDescriptions.hpp>
 #include <Scene2D/LayerParsing.hpp>
-//#include <Siv3D/ThirdParty/parallel_hashmap/phmap_dump.h>
+
 void Main() {
   int32 fps;
   entt::registry registry;
@@ -49,6 +49,7 @@ void Main() {
   
   const auto scaling_factor = 4;
   while (System::Update()) {
+    ClearPrint();
     const ScopedRenderStates2D sampler{SamplerState::ClampNearest};
     for (auto [ent, f_d,o_d] : registry.view<gq::Fungible,gq::Object>().each()) {
       for (auto coords : f_d.instance_coords) {
@@ -85,7 +86,7 @@ void Main() {
     if (KeyF6.up())
       goto Therac3D;
     fps = Profiler::FPS();
-    Window::SetTitle(fps);
+    Print(fps);
   }
 Therac3D:
   t3d::Therac3DScene();

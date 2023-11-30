@@ -1,7 +1,7 @@
 #include "UnfriendlyTextBox.h"
-#include <Siv3D/TextInput.hpp>
 #include "OpenSiv3D/Siv3D/src/Siv3D/Common/Siv3DEngine.hpp"
 #include "OpenSiv3D/Siv3D/src/Siv3D/TextInput/ITextInput.hpp"
+#include <Siv3D/TextInput.hpp>
 namespace mine {
 namespace UnfriendlyTextBox {
 constexpr double MinTextBoxWidth = 40.0;
@@ -10,41 +10,37 @@ constexpr ColorF ActiveTextColor{Palette::Lime};
 constexpr ColorF DisabledTextColor{Palette::Lime};
 constexpr ColorF TextAreaEditingTextBackgroundColor{Palette::Black};
 
-
 // based on TextInput::UpdateText
-void UpdateText(TextEditState& text)
-{
-    const String chars = SIV3D_ENGINE(TextInput)->getChars();
+void UpdateText(TextEditState &text) {
+  const String chars = SIV3D_ENGINE(TextInput)->getChars();
 
-    if(KeyTab.up())
-        text.tabKey = true;
-    else if(KeyEnter.up())
-        text.enterKey = true;
-    else if(KeyBackspace.up() && text.cursorPos > 0)
-    {
-        text.text.erase(text.text.begin() + text.cursorPos -1);
-        --text.cursorPos;
+  if (KeyTab.up())
+    text.tabKey = true;
+  else if (KeyEnter.up())
+    text.enterKey = true;
+  else if (KeyBackspace.up() && text.cursorPos > 0) {
+    text.text.erase(text.text.begin() + text.cursorPos - 1);
+    --text.cursorPos;
+  } else if (KeyDelete.up() && text.cursorPos < text.text.size()) {
+    text.text.erase(text.text.begin() + text.cursorPos);
+  }
+  for (auto ch : chars) {
+    if (not IsControl(ch)) {
+      text.text.insert(text.text.begin() + text.cursorPos, ch);
+      ++text.cursorPos;
     }
-    else if(KeyDelete.up() && text.cursorPos < text.text.size()){
-        text.text.erase(text.text.begin() + text.cursorPos);
-    }
-    for(auto ch: chars)
-    {
-        if (not IsControl(ch))
-        {
-            text.text.insert(text.text.begin() + text.cursorPos, ch);
-            ++text.cursorPos;
-        }
-    }
+  }
 }
 // TextBox stuff based on SimpleGUI::TextBox
-// fixed handling of control characters and added ability to set text style and cell background colour
+// fixed handling of control characters and added ability to set text style and
+// cell background colour
 bool TextBoxAt(TextEditState &text, const Vec2 &center, const double _width,
-               const Optional<size_t> &maxChars, const bool enabled, Font const & font, ColorF bgcolor, double actual_row_height) {
+               const Optional<size_t> &maxChars, const bool enabled,
+               Font const &font, ColorF bgcolor, double actual_row_height) {
   text.cursorPos = Min(text.cursorPos, text.text.size());
   text.tabKey = false;
   text.enterKey = false;
-  
+
   const int32 fontHeight = font.height();
 
   const String previousText = text.text;
@@ -52,31 +48,28 @@ bool TextBoxAt(TextEditState &text, const Vec2 &center, const double _width,
       ((text.active && enabled) ? TextInput::GetEditingText() : U"");
   {
     if (text.active && enabled)
-        UpdateText(text);
-        // something is fucked with the default backspace/delete/etc handling s3d::TextInput::UpdateText
-        // can't see the characters in raw stream etc either. Probably related to not having an IME installed/running
-    
+      UpdateText(text);
+    // something is fucked with the default backspace/delete/etc handling
+    // s3d::TextInput::UpdateText can't see the characters in raw stream etc
+    // either. Probably related to not having an IME installed/running
 
-    if (maxChars && (*maxChars < text.text.size()))
-    {
-        text.text.resize(*maxChars);
-        text.cursorPos = Min(text.cursorPos, *maxChars);
+    if (maxChars && (*maxChars < text.text.size())) {
+      text.text.resize(*maxChars);
+      text.cursorPos = Min(text.cursorPos, *maxChars);
     }
 
-
     text.textChanged = (text.text != previousText);
-    if (text.textChanged) 
-        text.cursorStopwatch.restart();
-    
+    if (text.textChanged)
+      text.cursorStopwatch.restart();
   }
-  
+
   // region is the actual box
 
   const RectF region{Arg::center = center, Max(_width, MinTextBoxWidth),
-                      actual_row_height};
+                     actual_row_height};
   // mouse cursor
   if (enabled && Cursor::OnClientRect() && region.mouseOver()) {
-      Cursor::RequestStyle(CursorStyle::IBeam);
+    Cursor::RequestStyle(CursorStyle::IBeam);
   }
 
   // activate/deactivate input cursor
@@ -107,8 +100,7 @@ bool TextBoxAt(TextEditState &text, const Vec2 &center, const double _width,
 
   if (text.text) {
     if (text.active && enabled && (not editingText)) {
-      if ((KeyControl + KeyHome).down())
-      {
+      if ((KeyControl + KeyHome).down()) {
         text.cursorPos = 0;
         text.cursorStopwatch.restart();
       } else if (
@@ -117,14 +109,12 @@ bool TextBoxAt(TextEditState &text, const Vec2 &center, const double _width,
 #else
           KeyHome.down()
 #endif
-              )
-      {
+      ) {
         text.cursorPos = 0;
         text.cursorStopwatch.restart();
       }
 
-      if ((KeyControl + KeyEnd).down())
-      {
+      if ((KeyControl + KeyEnd).down()) {
         text.cursorPos = text.text.size();
         text.cursorStopwatch.restart();
       } else if (
@@ -133,8 +123,7 @@ bool TextBoxAt(TextEditState &text, const Vec2 &center, const double _width,
 #else
           KeyEnd.down()
 #endif
-              )
-      {
+      ) {
         text.cursorPos = text.text.size();
         text.cursorStopwatch.restart();
       }
@@ -156,23 +145,22 @@ bool TextBoxAt(TextEditState &text, const Vec2 &center, const double _width,
       }
     }
   }
-/*
-  if (text.active && enabled && (not editingText)) {
-    {
-      if (text.tabKey || text.enterKey) {
-        text.active = false;
+  /*
+    if (text.active && enabled && (not editingText)) {
+      {
+        if (text.tabKey || text.enterKey) {
+          text.active = false;
+        }
       }
     }
-  }
-*/
+  */
   {
     const Vec2 textPos{(region.x + 8),
                        (center.y - font.height() / 2.0 + FontYOffset - 0.5)};
-    
 
     // actually draw the box
     region.draw(bgcolor);
-    
+
     {
       const ColorF textColor = ActiveTextColor;
       const auto &pixelShader = Font::GetPixelShader(font.method());
@@ -201,7 +189,8 @@ bool TextBoxAt(TextEditState &text, const Vec2 &center, const double _width,
 
       if (editingText) {
         // 変換テキストとその領域の取得
-        // "get converted/transformed text and its area" presumably from IME but this seems to pass through single ascii characters
+        // "get converted/transformed text and its area" presumably from IME but
+        // this seems to pass through single ascii characters
         const Array<Glyph> editingGlyphs = font.getGlyphs(editingText);
         Array<Vec2> editingGlyphPositions(editingGlyphs.size());
         {
@@ -224,7 +213,7 @@ bool TextBoxAt(TextEditState &text, const Vec2 &center, const double _width,
           const double w = ((editingGlyphPositions.back().x -
                              lastGlyph.getOffset().x + lastGlyph.xAdvance) -
                             pos.x);
-          RectF{pos, w, fontHeight}.draw(ColorF{0,0xff,0});
+          RectF{pos, w, fontHeight}.draw(ColorF{0, 0xff, 0});
 
           // 変換テキストの選択範囲の描画
           // I think this is supposed to draw a shadow behind selected text
@@ -271,7 +260,6 @@ bool TextBoxAt(TextEditState &text, const Vec2 &center, const double _width,
           }
         }
       }
-      
 
       // テキスト入力カーソルの描画
       // more input cursor blinking
@@ -315,11 +303,12 @@ bool TextBoxAt(TextEditState &text, const Vec2 &center, const double _width,
   return text.textChanged;
 }
 bool TextBox(TextEditState &text, const Vec2 &pos, double width,
-             const Optional<size_t> &maxChars, const bool enabled, Font const & font, ColorF bgcolor, double actual_row_height) {
+             const Optional<size_t> &maxChars, const bool enabled,
+             Font const &font, ColorF bgcolor, double actual_row_height) {
   width = Max(width, MinTextBoxWidth);
 
-  return TextBoxAt(text, pos + Vec2{width * 0.5, (int32) actual_row_height/2}, width, maxChars,
-                   enabled,font,bgcolor,actual_row_height);
+  return TextBoxAt(text, pos + Vec2{width * 0.5, (int32)actual_row_height / 2},
+                   width, maxChars, enabled, font, bgcolor, actual_row_height);
 }
 
 } // namespace UnfriendlyTextBox
