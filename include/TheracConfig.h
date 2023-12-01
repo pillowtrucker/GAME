@@ -39,7 +39,7 @@ enum TheracTextType
 class TheracConfigWidget
 {
 public:
-    TheracConfigWidget(String name, Point _p_in_grid,SimpleTable & grid, TextEditState _tes, HashTable<String, TheracTextType> & types, std::shared_ptr<thsAdapter::TheracSimulatorAdapter> _tsa);
+    TheracConfigWidget(String name, Point _p_in_grid,SimpleTable & grid, TextEditState _tes, HashTable<String, TheracTextType> & types, std::shared_ptr<thsAdapter::TheracSimulatorAdapter> _tsa, std::shared_ptr<std::mutex> _sdm,    Array<std::unique_ptr<std::function<void()>>>& _overrides, Font & _fat_font);
     TheracTextType text_field_type;
     Point p_in_grid;
     TextEditState tes;
@@ -66,6 +66,9 @@ private:
     int getBeamEnergy();
     bool verifyInputComplete();
     void MALFUNCTION(int num = 11);
+    std::shared_ptr<std::mutex> screen_drawing_mutex;
+    Array<std::unique_ptr<std::function<void()>>> & overrides;
+    Font & fat_font;
 };
 class TheracConfig {
 public:

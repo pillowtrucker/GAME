@@ -15,7 +15,7 @@ void TheracMinigame() {
   auto main_monitor = System::GetCurrentMonitor();
   auto const mms = main_monitor.fullscreenResolution;
   auto const test_font_size = 100;
-
+  
   Font test_font{FontMethod::MSDF, test_font_size,
                  U"resources/engine/font/hasklug/Hasklug.otf"};
   auto test_font_px_width = test_font.getGlyphInfo(U"█").width;
@@ -29,7 +29,10 @@ void TheracMinigame() {
   auto const font_size = Math::Floor(pixel_budget / pixels_per_point);
 
   Font myMonoFont{FontMethod::MSDF, static_cast<uint16_t>(font_size),
-                  U"resources/engine/font/hasklug/Hasklug.otf"};
+                                     U"resources/engine/font/hasklug/Hasklug.otf"};
+  auto & _myMonoFont = myMonoFont;
+  Font fat_font{FontMethod::MSDF, static_cast<uint16_t>(font_size)*4,
+                U"resources/engine/font/hasklug/Hasklug.otf"};
   Array<double> columns_ = Array<double>(num_columns, column_width);
   SimpleTable grid{(Array<double> const &)columns_,
                    {.borderThickness = 0,
@@ -64,17 +67,19 @@ void TheracMinigame() {
   auto actual_row_height = grid.height() / grid.rows();
 
   auto tsa = std::make_shared<thsAdapter::TheracSimulatorAdapter>();
-
+  auto screen_drawing_mutex = std::make_shared<std::mutex>();
   HashTable<String, tc::TheracConfigWidget *> dynamic_widgets;
+  auto overrides = Array<std::unique_ptr<std::function<void()>>>();
+  
   //  Array<tc::TheracConfigWidget*> para_widget_array; // this approach
   //  increased performance from 10fps to 17
-  grid.items().each_index([&widget_types, &dynamic_widgets, &grid, transparent,
+  grid.items().each_index([&, transparent,
                            tsa](auto i, auto v) {
     if (v.text.starts_with(U"PL")) {
       auto name = v.text;
       TextEditState tes;
       tc::TheracConfigWidget *thc =
-          new tc::TheracConfigWidget{name, i, grid, tes, widget_types, tsa};
+          new tc::TheracConfigWidget{name, i, grid, tes, widget_types, tsa,screen_drawing_mutex,overrides,fat_font};
       dynamic_widgets.insert({name, thc});
       grid.setTextColor(i.y, i.x, transparent);
       grid.setBackgroundColor(i.y, i.x, transparent);
@@ -85,27 +90,37 @@ void TheracMinigame() {
     w.second->finish_setup();
   }
 
-  phmap::parallel_flat_hash_map<String, std::shared_ptr<marl::Event>> evs;
 
-  while (System::Update()) {
-    ClearPrint();
-    grid.draw(Vec2{0, 0});
-    grid.items().each_index([&dynamic_widgets, background_colour, column_width,
-                             actual_row_height, &myMonoFont,
+  phmap::parallel_flat_hash_map<String, std::shared_ptr<marl::Event>> evs;
+  auto locked_update = [=]() { // without this, incredibly trippy screen corruption and opengl errors i didnt know you could trigger from software
+      std::lock_guard<std::mutex> sdm{*screen_drawing_mutex.get()};
+      return System::Update();
+  };
+      while (locked_update()) {
+      {
+          std::lock_guard<std::mutex> sdm{*screen_drawing_mutex.get()};
+          ClearPrint();
+          grid.draw(Vec2{0, 0});
+      }
+    
+      grid.items().each_index([=,&dynamic_widgets,
                              &evs](auto i, auto v) {
       if (v.text.starts_with(U"PL")) {
         tc::TheracConfigWidget &w = *dynamic_widgets[v.text];
-        mine::UnfriendlyTextBox::TextBox(
-            w.tes, Vec2{i.x * column_width, i.y * actual_row_height},
-            column_width, w.max_chars, w.enabled, myMonoFont, background_colour,
-            actual_row_height); // this is not thread-safe/reentrant due to some
-                                // siv3d font dingdong breaking
+        {
+            std::lock_guard<std::mutex> sdm{*screen_drawing_mutex.get()};
+            mine::UnfriendlyTextBox::TextBox(
+                w.tes, Vec2{i.x * column_width, i.y * actual_row_height},
+                column_width, w.max_chars, w.enabled, _myMonoFont, background_colour,
+                actual_row_height);
+        }
         if (evs.find(v.text) != evs.end()) {
           auto ev = evs[v.text];
           if (ev.get()->isSignalled()) {
             ev.get()->clear();
             marl::schedule([=, &w]() {
-              defer(ev.get()->signal());
+                defer(ev.get()->signal());
+                
               w.mangle();
             });
           } else {
@@ -115,14 +130,33 @@ void TheracMinigame() {
 
           marl::schedule([=, &w]() {
             defer(ev.get()->signal());
+            /*
+            {
+                // this DOESN'T WORK because this thing has to be overlaid on
+                // and therefore synchronized with the layout grid
+                std::lock_guard<std::mutex> sdm{*screen_drawing_mutex.get()};
+                mine::UnfriendlyTextBox::TextBox(
+                    w.tes, Vec2{i.x * column_width, i.y * actual_row_height},
+                    column_width, w.max_chars, w.enabled, myMonoFont, background_colour,
+                    actual_row_height);
+            }
+            */
+            
             w.mangle();
           });
           evs[v.text] = ev;
         }
       }
     });
-
-    fps = Profiler::FPS();
-    Print(fps);
+      {
+          std::lock_guard<std::mutex> sdm{*screen_drawing_mutex.get()};
+          //Console << overrides.get()->size();
+          overrides.each([] (auto& fp) {(*fp.get())();});
+      }
+      {
+          std::lock_guard<std::mutex> sdm{*screen_drawing_mutex.get()};
+          fps = Profiler::FPS();
+          Print(fps);
+      }
   }
 }

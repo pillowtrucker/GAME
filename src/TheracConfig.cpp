@@ -1,6 +1,9 @@
 #include "TheracConfig.h"
 #include "OpenSiv3D/Siv3D/src/ThirdParty/nlohmann/json.hpp"
 #include <Siv3D.hpp>
+#include <unistd.h>
+#include "OpenSiv3D/Siv3D/src/Siv3D/Common/Siv3DEngine.hpp"
+#include <OpenSiv3D/Siv3D/src/Siv3D/System/ISystem.hpp>
 namespace TheracConfig {
 auto const BEAMTYPE_FIELD = U"PLACEHOLDER_BT";
 auto const UNIT_RATE_P_FIELD = U"PLACEHOLDER_URMP";
@@ -13,8 +16,11 @@ auto const PATIENT_NAME_FIELD = U"PLACEHOLDER_PN";
 TheracConfigWidget::TheracConfigWidget(
     String _name, Point _p_in_grid, SimpleTable &_grid, TextEditState _tes,
     HashTable<String, TheracTextType> &types,
-    std::shared_ptr<thsAdapter::TheracSimulatorAdapter> _tsa)
-    : p_in_grid{_p_in_grid}, tes{_tes}, grid{_grid}, name{_name}, tsa{_tsa} {
+    std::shared_ptr<thsAdapter::TheracSimulatorAdapter> _tsa,
+    std::shared_ptr<std::mutex> _sdm,
+    Array<std::unique_ptr<std::function<void()>>>& _overrides,
+    Font & _fat_font)
+    : p_in_grid{_p_in_grid}, tes{_tes}, grid{_grid}, name{_name}, tsa{_tsa},screen_drawing_mutex{_sdm}, overrides{_overrides}, fat_font{_fat_font} {
   text_field_type = types[name];
 }
 
@@ -166,6 +172,7 @@ void TheracConfigWidget::mangle() {
     if(!tes.active)
         break;
     if(tes.text == U"T"){
+        overrides.clear();
         if(verifyInputComplete()) {
             tsa.get()->externalCallWrap(thsAdapter::ExtCallSendMEOS,translateBeamType() , translateColPos(), getBeamEnergy());
             tsa.get()->externalCallWrap(thsAdapter::ExtCallToggleEditingTakingPlace);
@@ -175,9 +182,12 @@ void TheracConfigWidget::mangle() {
             MALFUNCTION();
         }
     } else if(tes.text == U"P") {
+        overrides.clear();
         tsa.get()->externalCallWrap(thsAdapter::ExtCallProceed);
         tes.text.clear();
     } else if(tes.text == U"R") {
+
+        overrides.clear();
         tsa.get()->externalCallWrap(thsAdapter::ExtCallReset);
         tes.text.clear();
     }
@@ -249,12 +259,47 @@ int TheracConfigWidget::getBeamEnergy() {
     auto ben = dynamic_widgets.value()[BEAM_ENERGY_FIELD];
     return ParseOpt<int>(ben->tes.text).value_or(25000); // lol
 }
-/* TODO
+
 bool TheracConfigWidget::verifyInputComplete() {
-
-
+    for (auto [l,w]: dynamic_widgets.value()){
+        auto t = w->text_field_type;
+        auto te = w->tes.text;
+        if(t == Verifier)
+        {
+            if(!(te == U"VERIFIED"))
+                return false;
+        }
+        else if(t == Normal) {
+            if(te == U"")
+                return false;
+        } else if(t == BeamEnergy) {
+            if(te == U"0")
+                return false;
+        } else if (t == BeamModeInput) {
+            if(!(te == U"X" || te == U"E"))
+                return false;
+        }
+    }
+    return true;
 }
-*/
+
+void TheracConfigWidget::MALFUNCTION(int num) {
+    auto malfunction_override = std::make_unique<std::function<void()>>([=,*this] () -> void {
+        auto window_size = System::GetCurrentMonitor().fullscreenResolution;
+        TextEditState _tes;
+        _tes.text = U"MALFUNCTION {}"_fmt(num);        
+        mine::UnfriendlyTextBox::TextBoxAt(
+            _tes, Vec2{window_size.x/2, window_size.y/2},
+            window_size.x/2, 80, false, fat_font, Palette::Red,
+            window_size.y/2);
+        return;
+    });
+
+    overrides.push_back(std::move(malfunction_override));
+
+    tes.clear();
+}
+
 TheracConfig::TheracConfig(FilePath p) {
   widget_config_filepath = p;
   load_ui_widgets();

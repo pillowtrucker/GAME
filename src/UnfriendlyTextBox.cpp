@@ -36,7 +36,8 @@ void UpdateText(TextEditState &text) {
 // cell background colour
 bool TextBoxAt(TextEditState &text, const Vec2 &center, const double _width,
                const Optional<size_t> &maxChars, const bool enabled,
-               Font const &font, ColorF bgcolor, double actual_row_height) {
+               Font const & _font, ColorF bgcolor, double actual_row_height) {
+    auto font = _font;
   text.cursorPos = Min(text.cursorPos, text.text.size());
   text.tabKey = false;
   text.enterKey = false;
@@ -304,7 +305,7 @@ bool TextBoxAt(TextEditState &text, const Vec2 &center, const double _width,
 }
 bool TextBox(TextEditState &text, const Vec2 &pos, double width,
              const Optional<size_t> &maxChars, const bool enabled,
-             Font const &font, ColorF bgcolor, double actual_row_height) {
+             Font const & font, ColorF bgcolor, double actual_row_height) {
   width = Max(width, MinTextBoxWidth);
 
   return TextBoxAt(text, pos + Vec2{width * 0.5, (int32)actual_row_height / 2},
