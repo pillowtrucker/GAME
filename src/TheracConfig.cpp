@@ -129,16 +129,16 @@ void TheracConfigWidget::enforce_int() {
 }
 
 void TheracConfigWidget::mangle() {
-  std::unique_lock<std::timed_mutex> sm{timed_state_mutex};
-  std::unique_lock<std::shared_mutex> jm{jump_mutex,std::defer_lock};
-  std::unique_lock<std::shared_mutex> am{autofill_mutex,std::defer_lock};
-//  std::unique_lock<std::shared_mutex> smn{next_field->state_mutex,std::defer_lock};
-  std::unique_lock<std::shared_mutex> jmn{next_field->jump_mutex,std::defer_lock};
-  std::unique_lock<std::shared_mutex> amn{next_field->autofill_mutex,std::defer_lock};
-//  std::unique_lock<std::shared_mutex> smp{prev_field->state_mutex,std::defer_lock};
-  std::unique_lock<std::shared_mutex> jmp{prev_field->jump_mutex,std::defer_lock};
-  std::unique_lock<std::shared_mutex> amp{prev_field->autofill_mutex,std::defer_lock};
-  
+    std::unique_lock<std::timed_mutex> sm{timed_state_mutex};
+    std::unique_lock<std::shared_mutex> jm{jump_mutex,std::defer_lock};
+    std::unique_lock<std::shared_mutex> am{autofill_mutex,std::defer_lock};
+    std::unique_lock<std::shared_mutex> jmn{next_field->jump_mutex,std::defer_lock};
+    std::unique_lock<std::shared_mutex> amn{next_field->autofill_mutex,std::defer_lock};
+    std::unique_lock<std::shared_mutex> jmp{prev_field->jump_mutex,std::defer_lock};
+    std::unique_lock<std::shared_mutex> amp{prev_field->autofill_mutex,std::defer_lock};
+
+    std::unique_lock<std::mutex> sdm{*screen_drawing_mutex,std::defer_lock};  
+
   switch (text_field_type) {
   case FloatSrc:
     break;
@@ -205,7 +205,10 @@ void TheracConfigWidget::mangle() {
             break;
         }
         if(tes.text == U"T"){
+
+            sdm.lock();
             overrides.clear();
+            sdm.unlock();
             tes.text.clear();
             if(verifyInputComplete()) {
                 tsa.get()->externalCallWrap(thsAdapter::ExtCallSendMEOS,translateBeamType() , translateColPos(), getBeamEnergy());
@@ -216,11 +219,17 @@ void TheracConfigWidget::mangle() {
                 MALFUNCTION();
             }
         } else if(tes.text == U"P") {
+            
+            sdm.lock();
             overrides.clear();
+            sdm.unlock();
             tsa.get()->externalCallWrap(thsAdapter::ExtCallProceed);
             tes.text.clear();
         } else if(tes.text == U"R") {
+            
+            sdm.lock();
             overrides.clear();
+            sdm.unlock();
             tsa.get()->externalCallWrap(thsAdapter::ExtCallReset);
             tes.text.clear();
         }
@@ -258,12 +267,12 @@ void TheracConfigWidget::mangle() {
           if (prev_field != nullptr && keys_up[KeyUp.asUint32()] && jm.try_lock() && should_jump){ 
           jm.unlock();
               if(text_field_type == CmdEntry){
-                  if(tes.text == U"T") {
+                  //if(tes.text == U"T") {
                       tsa.get()->externalCallWrap(thsAdapter::ExtCallToggleEditingTakingPlace);
                       tsa.get()->externalCallWrap(thsAdapter::ExtCallToggleDatentComplete);
-                  }
+                      //}
                   tes.text.clear();
-              }
+              } 
 
                   if(jmp.try_lock()) {
                       tes.active = false;
@@ -358,14 +367,14 @@ void TheracConfigWidget::MALFUNCTION(int num) {
         TheracConfigWidget dummy_w(_tes.text,Point{},grid,_tes,dummy_types,tsa,screen_drawing_mutex,overrides,fat_font);
         mine::UnfriendlyTextBox::TextBoxAt(dummy_w,
             _tes, Vec2{window_size.x/2, window_size.y/2},
-            window_size.x/2, 80, false, fat_font, Palette::Red,
-            window_size.y/2);
+            window_size.x/3, 80, false, fat_font, Palette::Red,
+            window_size.y/4);
         
     });
-
+    std::unique_lock<std::mutex> sdm{*screen_drawing_mutex,std::defer_lock};
+    sdm.lock();
     overrides.insert(std::move(malfunction_override));
-
-
+    sdm.unlock();
 }
 TheracConfig::TheracConfig(FilePath p) {
   widget_config_filepath = p;

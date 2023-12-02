@@ -31,7 +31,8 @@ void TheracMinigame() {
   Font myMonoFont{FontMethod::MSDF, static_cast<uint16_t>(font_size),
                                      U"resources/engine/font/hasklug/Hasklug.otf"};
   auto & _myMonoFont = myMonoFont;
-  Font fat_font{FontMethod::MSDF, static_cast<uint16_t>(font_size)*4,
+
+  Font fat_font{FontMethod::MSDF, static_cast<uint16_t>(font_size)*3,
                 U"resources/engine/font/hasklug/Hasklug.otf"};
   Array<double> columns_ = Array<double>(num_columns, column_width);
   SimpleTable grid{(Array<double> const &)columns_,

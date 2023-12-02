@@ -15,7 +15,6 @@ namespace thc = TheracConfig;
 // based on TextInput::UpdateText
 void UpdateText(TextEditState &text, thc::TheracConfigWidget& w) {
   const String chars = SIV3D_ENGINE(TextInput)->getChars();
-//  if(w.jump_mutex.try_lock()){
       if (KeyTab.up())
           w.keys_up[KeyTab.asUint32()] = true;
       else if (KeyEnter.up())
@@ -24,9 +23,6 @@ void UpdateText(TextEditState &text, thc::TheracConfigWidget& w) {
           w.keys_up[KeyUp.asUint32()] = true;
       else if (KeyDown.up())
           w.keys_up[KeyDown.asUint32()] = true;
-//  } else {
-//      w.jump_mutex.unlock();
-//  }
   if (KeyBackspace.up() && text.cursorPos > 0) {
     text.text.erase(text.text.begin() + text.cursorPos - 1);
     --text.cursorPos;
@@ -157,15 +153,7 @@ bool TextBoxAt(thc::TheracConfigWidget& w,TextEditState &text, const Vec2 &cente
       }
     }
   }
-  /*
-    if (text.active && enabled && (not editingText)) {
-      {
-        if (text.tabKey || text.enterKey) {
-          text.active = false;
-        }
-      }
-    }
-  */
+
   {
     const Vec2 textPos{(region.x + 8),
                        (center.y - font.height() / 2.0 + FontYOffset - 0.5)};

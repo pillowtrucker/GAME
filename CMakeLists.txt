@@ -1,14 +1,17 @@
 cmake_minimum_required(VERSION 3.26)
 project(GAME)
 
-# this is way easier than finding the 382 deps found by ldd
+## this is way easier than finding the 382 deps found by ldd
 find_package(Siv3D)
-find_package(EnTT)
+#find_package(EnTT)
 set(ghc_version 9.8.1)
 set(ghc_rts_ver 1.0.2)
 file(COPY resources DESTINATION ${CMAKE_BINARY_DIR})
 file(COPY $ENV{HOME}/.ghcup/ghc/${ghc_version}/lib/ghc-${ghc_version}/lib/x86_64-linux-ghc-${ghc_version}/libHSrts-${ghc_rts_ver}_thr-ghc${ghc_version}.so DESTINATION ${CMAKE_BINARY_DIR})
-
+#add_subdirectory(${PROJECT_SOURCE_DIR}/OpenSiv3D/Linux)
+add_subdirectory(${PROJECT_SOURCE_DIR}/entt)
+#add_subdirectory(${PROJECT_SOURCE_DIR}/OpenSiv3D/Linux/App)
+#add_subdirectory(${PROJECT_SOURCE_DIR}/tileson)
 #target_compile_features(Siv3DTest PRIVATE cxx_std_20)
 #add_library(libSiv3D STATIC IMPORTED)
 #set_target_properties(libSiv3D PROPERTIES IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/OpenSiv3D/Linux/build/libSiv3D.a")
