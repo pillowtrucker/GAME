@@ -69,7 +69,7 @@ void TheracMinigame() {
   auto tsa = std::make_shared<thsAdapter::TheracSimulatorAdapter>();
   auto screen_drawing_mutex = std::make_shared<std::mutex>();
   HashTable<String, tc::TheracConfigWidget *> dynamic_widgets;
-  auto overrides = Array<std::unique_ptr<std::function<void()>>>();
+  auto overrides = phmap::parallel_node_hash_set<std::unique_ptr<std::function<void()>>>();
   
   //  Array<tc::TheracConfigWidget*> para_widget_array; // this approach
   //  increased performance from 10fps to 17
@@ -93,12 +93,12 @@ void TheracMinigame() {
 
   phmap::parallel_flat_hash_map<String, std::shared_ptr<marl::Event>> evs;
   auto locked_update = [=]() { // without this, incredibly trippy screen corruption and opengl errors i didnt know you could trigger from software
-      std::lock_guard<std::mutex> sdm{*screen_drawing_mutex.get()};
+      std::lock_guard<std::mutex> sdm{*screen_drawing_mutex};
       return System::Update();
   };
       while (locked_update()) {
       {
-          std::lock_guard<std::mutex> sdm{*screen_drawing_mutex.get()};
+          std::lock_guard<std::mutex> sdm{*screen_drawing_mutex};
           ClearPrint();
           grid.draw(Vec2{0, 0});
       }
@@ -108,28 +108,28 @@ void TheracMinigame() {
       if (v.text.starts_with(U"PL")) {
         tc::TheracConfigWidget &w = *dynamic_widgets[v.text];
         {
-            std::lock_guard<std::mutex> sdm{*screen_drawing_mutex.get()};
-            mine::UnfriendlyTextBox::TextBox(
+            std::lock_guard<std::mutex> sdm{*screen_drawing_mutex};
+            mine::UnfriendlyTextBox::TextBox(w,
                 w.tes, Vec2{i.x * column_width, i.y * actual_row_height},
                 column_width, w.max_chars, w.enabled, _myMonoFont, background_colour,
                 actual_row_height);
         }
         if (evs.find(v.text) != evs.end()) {
           auto ev = evs[v.text];
-          if (ev.get()->isSignalled()) {
-            ev.get()->clear();
+          if ((*ev).isSignalled()) {
+              (*ev).clear();
             marl::schedule([=, &w]() {
-                defer(ev.get()->signal());
+                defer((*ev).signal());
                 
               w.mangle();
             });
           } else {
           }
         } else {
-          auto ev = std::make_shared<marl::Event>(marl::Event::Mode::Manual);
+            auto ev = std::make_shared<marl::Event>(marl::Event::Mode::Manual);
 
           marl::schedule([=, &w]() {
-            defer(ev.get()->signal());
+              defer((*ev).signal());
             /*
             {
                 // this DOESN'T WORK because this thing has to be overlaid on
@@ -151,7 +151,7 @@ void TheracMinigame() {
       {
           std::lock_guard<std::mutex> sdm{*screen_drawing_mutex.get()};
           //Console << overrides.get()->size();
-          overrides.each([] (auto& fp) {(*fp.get())();});
+          overrides.for_each([] (auto& fp) {(*fp)();});
       }
       {
           std::lock_guard<std::mutex> sdm{*screen_drawing_mutex.get()};

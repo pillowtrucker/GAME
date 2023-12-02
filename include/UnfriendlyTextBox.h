@@ -10,14 +10,12 @@
 #include "Siv3D/TextAreaEditState.hpp"
 #include "Siv3D/TextEditState.hpp"
 #include "Siv3D/Unspecified.hpp"
-
+#include "TheracConfig.h"
 
 using namespace s3d;
 namespace mine {
 namespace UnfriendlyTextBox
-
 {
-
 /// @brief テキストボックスを表示します。
 /// @param text テキストボックスの状態への参照
 /// @param center テキストボックスの中心座標
@@ -25,7 +23,7 @@ namespace UnfriendlyTextBox
 /// @param maxChars 入力できる最大の文字数 (char32 の要素数）
 /// @param enabled テキストボックスの操作を有効にするか
 /// @return テキストが操作された場合 true, それ以外の場合は false
-bool TextBoxAt(TextEditState &text, const Vec2 &center, double width = 200.0,
+    bool TextBoxAt(TheracConfig::TheracConfigWidget& w,TextEditState &text, const Vec2 &center, double width = 200.0,
                const Optional<size_t> &maxChars = unspecified,
                bool enabled = true, Font const & font = SimpleGUI::GetFont(), ColorF bgcolor = ColorF{0}, double actual_row_height = 200);
 /// @brief テキストボックスを表示します。
@@ -35,7 +33,7 @@ bool TextBoxAt(TextEditState &text, const Vec2 &center, double width = 200.0,
 /// @param maxChars 入力できる最大の文字数 (char32 の要素数）
 /// @param enabled テキストボックスの操作を有効にするか
 /// @return テキストが操作された場合 true, それ以外の場合は false
-bool TextBox(TextEditState &text, const Vec2 &pos, double width = 200.0,
+    bool TextBox(TheracConfig::TheracConfigWidget& w,TextEditState &text, const Vec2 &pos, double width = 200.0,
              const Optional<size_t> &maxChars = unspecified,
              bool enabled = true, Font const & font = SimpleGUI::GetFont(), ColorF bgcolor = ColorF{0}, double actual_row_height = 200);
 

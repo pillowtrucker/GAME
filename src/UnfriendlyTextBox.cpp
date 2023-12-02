@@ -2,6 +2,8 @@
 #include "OpenSiv3D/Siv3D/src/Siv3D/Common/Siv3DEngine.hpp"
 #include "OpenSiv3D/Siv3D/src/Siv3D/TextInput/ITextInput.hpp"
 #include <Siv3D/TextInput.hpp>
+#include "TheracConfig.h"
+namespace thc = TheracConfig;
 namespace mine {
 namespace UnfriendlyTextBox {
 constexpr double MinTextBoxWidth = 40.0;
@@ -9,16 +11,23 @@ constexpr int32 FontYOffset = -1;
 constexpr ColorF ActiveTextColor{Palette::Lime};
 constexpr ColorF DisabledTextColor{Palette::Lime};
 constexpr ColorF TextAreaEditingTextBackgroundColor{Palette::Black};
-
+namespace thc = TheracConfig;
 // based on TextInput::UpdateText
-void UpdateText(TextEditState &text) {
+void UpdateText(TextEditState &text, thc::TheracConfigWidget& w) {
   const String chars = SIV3D_ENGINE(TextInput)->getChars();
-
-  if (KeyTab.up())
-    text.tabKey = true;
-  else if (KeyEnter.up())
-    text.enterKey = true;
-  else if (KeyBackspace.up() && text.cursorPos > 0) {
+//  if(w.jump_mutex.try_lock()){
+      if (KeyTab.up())
+          w.keys_up[KeyTab.asUint32()] = true;
+      else if (KeyEnter.up())
+          w.keys_up[KeyEnter.asUint32()] = true;
+      else if (KeyUp.up())
+          w.keys_up[KeyUp.asUint32()] = true;
+      else if (KeyDown.up())
+          w.keys_up[KeyDown.asUint32()] = true;
+//  } else {
+//      w.jump_mutex.unlock();
+//  }
+  if (KeyBackspace.up() && text.cursorPos > 0) {
     text.text.erase(text.text.begin() + text.cursorPos - 1);
     --text.cursorPos;
   } else if (KeyDelete.up() && text.cursorPos < text.text.size()) {
@@ -34,13 +43,15 @@ void UpdateText(TextEditState &text) {
 // TextBox stuff based on SimpleGUI::TextBox
 // fixed handling of control characters and added ability to set text style and
 // cell background colour
-bool TextBoxAt(TextEditState &text, const Vec2 &center, const double _width,
+bool TextBoxAt(thc::TheracConfigWidget& w,TextEditState &text, const Vec2 &center, const double _width,
                const Optional<size_t> &maxChars, const bool enabled,
                Font const & _font, ColorF bgcolor, double actual_row_height) {
     auto font = _font;
   text.cursorPos = Min(text.cursorPos, text.text.size());
-  text.tabKey = false;
-  text.enterKey = false;
+  for(auto [k,v]: w.keys_up){
+      w.keys_up[k] = false;
+  }
+  
 
   const int32 fontHeight = font.height();
 
@@ -49,7 +60,7 @@ bool TextBoxAt(TextEditState &text, const Vec2 &center, const double _width,
       ((text.active && enabled) ? TextInput::GetEditingText() : U"");
   {
     if (text.active && enabled)
-      UpdateText(text);
+        UpdateText(text,w);
     // something is fucked with the default backspace/delete/etc handling
     // s3d::TextInput::UpdateText can't see the characters in raw stream etc
     // either. Probably related to not having an IME installed/running
@@ -303,12 +314,12 @@ bool TextBoxAt(TextEditState &text, const Vec2 &center, const double _width,
 
   return text.textChanged;
 }
-bool TextBox(TextEditState &text, const Vec2 &pos, double width,
+bool TextBox(thc::TheracConfigWidget& w,TextEditState &text, const Vec2 &pos, double width,
              const Optional<size_t> &maxChars, const bool enabled,
              Font const & font, ColorF bgcolor, double actual_row_height) {
   width = Max(width, MinTextBoxWidth);
 
-  return TextBoxAt(text, pos + Vec2{width * 0.5, (int32)actual_row_height / 2},
+  return TextBoxAt(w, text, pos + Vec2{width * 0.5, (int32)actual_row_height / 2},
                    width, maxChars, enabled, font, bgcolor, actual_row_height);
 }
 

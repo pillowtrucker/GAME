@@ -1,5 +1,6 @@
+#pragma once
 #include "TheracSimulatorAdapter.hpp"
-#include "UnfriendlyTextBox.h"
+
 #include <Siv3D.hpp>
 namespace TheracConfig
 {    
@@ -39,7 +40,7 @@ enum TheracTextType
 class TheracConfigWidget
 {
 public:
-    TheracConfigWidget(String name, Point _p_in_grid,SimpleTable & grid, TextEditState _tes, HashTable<String, TheracTextType> & types, std::shared_ptr<thsAdapter::TheracSimulatorAdapter> _tsa, std::shared_ptr<std::mutex> _sdm,    Array<std::unique_ptr<std::function<void()>>>& _overrides, Font & _fat_font);
+    TheracConfigWidget(String name, Point _p_in_grid,SimpleTable & grid, TextEditState _tes, HashTable<String, TheracTextType> & types, std::shared_ptr<thsAdapter::TheracSimulatorAdapter> _tsa, std::shared_ptr<std::mutex> _sdm,    phmap::parallel_node_hash_set<std::unique_ptr<std::function<void()>>>& _overrides, Font & _fat_font);
     TheracTextType text_field_type;
     Point p_in_grid;
     TextEditState tes;
@@ -49,12 +50,16 @@ public:
     SimpleTable & grid;
     String name;
     uint32_t max_chars = 200;
-    bool jump_lock = false;
-    bool autofill_lock = false;
+    std::timed_mutex timed_state_mutex;
     TheracConfigWidget * prev_field;
     void finish_setup();
     void mangle();
     std::variant<std::monostate,TheracConfigVerifier*,TheracConfigFloatDest*> my_data;
+    phmap::parallel_node_hash_map<uint32_t, bool> keys_up;
+    std::shared_mutex jump_mutex;
+    bool should_jump = true;
+    std::shared_mutex autofill_mutex;
+    bool should_autofill = true;
 
 private:
     void verify_floats();
@@ -67,7 +72,7 @@ private:
     bool verifyInputComplete();
     void MALFUNCTION(int num = 11);
     std::shared_ptr<std::mutex> screen_drawing_mutex;
-    Array<std::unique_ptr<std::function<void()>>> & overrides;
+    phmap::parallel_node_hash_set<std::unique_ptr<std::function<void()>>> & overrides;
     Font & fat_font;
 };
 class TheracConfig {
