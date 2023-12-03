@@ -1,5 +1,5 @@
-#include <TheracSimulatorAdapter.hpp>
-namespace thsAdapter {
+#include "Plugins/TheracSimulatorAdapter.hpp"
+namespace GAME::Plugins::TheracSimulatorAdapter {
 void TheracSimulatorAdapter::hs_init(String args) {
   auto _argv = args.split(' ');
 

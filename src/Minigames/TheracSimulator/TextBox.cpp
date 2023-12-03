@@ -1,19 +1,19 @@
-#include "UnfriendlyTextBox.h"
+#include "Minigames/TheracSimulator/TextBox.hpp"
 #include "OpenSiv3D/Siv3D/src/Siv3D/Common/Siv3DEngine.hpp"
 #include "OpenSiv3D/Siv3D/src/Siv3D/TextInput/ITextInput.hpp"
-#include <Siv3D/TextInput.hpp>
-#include "TheracConfig.h"
-namespace thc = TheracConfig;
-namespace mine {
-namespace UnfriendlyTextBox {
+#include "OpenSiv3D/Siv3D/include/Siv3D/TextInput.hpp"
+#include "Minigames/TheracSimulator/TheracConsole.hpp"
+
+
+namespace GAME::Minigames::TheracSimulator::Console {
 constexpr double MinTextBoxWidth = 40.0;
 constexpr int32 FontYOffset = -1;
 constexpr ColorF ActiveTextColor{Palette::Lime};
 constexpr ColorF DisabledTextColor{Palette::Lime};
 constexpr ColorF TextAreaEditingTextBackgroundColor{Palette::Black};
-namespace thc = TheracConfig;
+namespace thc = GAME::Minigames::TheracSimulator::Console;
 // based on TextInput::UpdateText
-void UpdateText(TextEditState &text, thc::TheracConfigWidget& w) {
+void UpdateText(TextEditState &text, thc::TheracConsoleWidget& w) {
   const String chars = SIV3D_ENGINE(TextInput)->getChars();
       if (KeyTab.up())
           w.keys_up[KeyTab.asUint32()] = true;
@@ -39,7 +39,7 @@ void UpdateText(TextEditState &text, thc::TheracConfigWidget& w) {
 // TextBox stuff based on SimpleGUI::TextBox
 // fixed handling of control characters and added ability to set text style and
 // cell background colour
-bool TextBoxAt(thc::TheracConfigWidget& w,TextEditState &text, const Vec2 &center, const double _width,
+bool TextBoxAt(thc::TheracConsoleWidget& w,TextEditState &text, const Vec2 &center, const double _width,
                const Optional<size_t> &maxChars, const bool enabled,
                Font const & _font, ColorF bgcolor, double actual_row_height) {
     auto font = _font;
@@ -302,7 +302,7 @@ bool TextBoxAt(thc::TheracConfigWidget& w,TextEditState &text, const Vec2 &cente
 
   return text.textChanged;
 }
-bool TextBox(thc::TheracConfigWidget& w,TextEditState &text, const Vec2 &pos, double width,
+bool TextBox(thc::TheracConsoleWidget& w,TextEditState &text, const Vec2 &pos, double width,
              const Optional<size_t> &maxChars, const bool enabled,
              Font const & font, ColorF bgcolor, double actual_row_height) {
   width = Max(width, MinTextBoxWidth);
@@ -310,6 +310,5 @@ bool TextBox(thc::TheracConfigWidget& w,TextEditState &text, const Vec2 &pos, do
   return TextBoxAt(w, text, pos + Vec2{width * 0.5, (int32)actual_row_height / 2},
                    width, maxChars, enabled, font, bgcolor, actual_row_height);
 }
+} // namespace GAME::Minigames::TheracSimulator::Console
 
-} // namespace UnfriendlyTextBox
-} // namespace mine

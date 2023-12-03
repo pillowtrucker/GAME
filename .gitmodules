@@ -13,3 +13,6 @@
 [submodule "marl"]
 	path = marl
 	url = git@github-pillow:pillowtrucker/marl.git
+[submodule "LDtkLoader"]
+	path = LDtkLoader
+	url = git@github-pillow:pillowtrucker/LDtkLoader.git

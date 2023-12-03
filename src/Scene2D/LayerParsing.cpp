@@ -1,5 +1,5 @@
 #include <Scene2D/LayerParsing.hpp>
-namespace scene2d {
+namespace GAME::Scene2D {
 void parse_layers(tson::Layer &l, gq::ActualLayerType lt,
                   entt::registry &registry, tson::Tileset &tileset,
                   HashTable<String, String> &tile_descriptions) {

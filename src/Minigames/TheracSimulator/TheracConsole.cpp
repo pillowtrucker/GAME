@@ -1,11 +1,11 @@
-#include "TheracConfig.h"
+#include "Minigames/TheracSimulator/TheracConsole.hpp"
 #include "OpenSiv3D/Siv3D/src/ThirdParty/nlohmann/json.hpp"
-#include <Siv3D.hpp>
+#include "OpenSiv3D/Siv3D/include/Siv3D.hpp"
 #include <unistd.h>
 #include "OpenSiv3D/Siv3D/src/Siv3D/Common/Siv3DEngine.hpp"
 #include <OpenSiv3D/Siv3D/src/Siv3D/System/ISystem.hpp>
-#include "UnfriendlyTextBox.h"
-namespace TheracConfig {
+#include "Minigames/TheracSimulator/TextBox.hpp"
+namespace GAME::Minigames::TheracSimulator::Console {
 auto const BEAMTYPE_FIELD = U"PLACEHOLDER_BT";
 auto const UNIT_RATE_P_FIELD = U"PLACEHOLDER_URMP";
 auto const TIME_PRESCRIBED_P_FIELD = U"PLACEHOLDER_TMP";
@@ -14,9 +14,9 @@ auto const ACCESSORY_NUMBER_P_FIELD = U"PLACEHOLDER_ANP";
 auto const COMMAND_ENTRY_FIELD = U"PLACEHOLDER_CMD";
 auto const BEAM_ENERGY_FIELD = U"PLACEHOLDER_EN";
 auto const PATIENT_NAME_FIELD = U"PLACEHOLDER_PN";
-TheracConfigWidget::TheracConfigWidget(
+TheracConsoleWidget::TheracConsoleWidget(
     String _name, Point _p_in_grid, SimpleTable &_grid, TextEditState _tes,
-    HashTable<String, TheracTextType> &types,
+    HashTable<String, TheracConsoleWidgetType> &types,
     std::shared_ptr<thsAdapter::TheracSimulatorAdapter> _tsa,
     std::shared_ptr<std::mutex> _sdm,
     phmap::parallel_node_hash_set<std::unique_ptr<std::function<void()>>>& _overrides,
@@ -26,7 +26,7 @@ TheracConfigWidget::TheracConfigWidget(
 }
 
 // finish doing setup after all the other widgets are set up
-void TheracConfigWidget::finish_setup() {
+void TheracConsoleWidget::finish_setup() {
   String maybe_next;
   switch (text_field_type) {
 
@@ -42,7 +42,7 @@ void TheracConfigWidget::finish_setup() {
     next_field->prev_field = this;
     break;
   case Verifier:
-    my_data = new TheracConfigVerifier{
+    my_data = new TheracConsoleVerifier{
         .source_input =
             *dynamic_widgets.value()
                  [grid.getItem(Point(p_in_grid.x - 2, p_in_grid.y)).text],
@@ -78,7 +78,7 @@ void TheracConfigWidget::finish_setup() {
     if (name == ACCESSORY_NUMBER_P_FIELD)
       next_field = dynamic_widgets.value()[COMMAND_ENTRY_FIELD];
     next_field->prev_field = this;
-    my_data = new TheracConfigFloatDest{
+    my_data = new TheracConsoleFloatDest{
         .source_input =
             *dynamic_widgets.value()
                  [grid.getItem(Point(p_in_grid.x - 1, p_in_grid.y)).text]};
@@ -103,8 +103,8 @@ void TheracConfigWidget::finish_setup() {
   }
 }
 
-void TheracConfigWidget::verify_floats() {
-  TheracConfigVerifier &d = *std::get<TheracConfigVerifier *>(my_data);
+void TheracConsoleWidget::verify_floats() {
+  TheracConsoleVerifier &d = *std::get<TheracConsoleVerifier *>(my_data);
   if(d.source_input.timed_state_mutex.try_lock_for(Milliseconds{16})) {
       if(d.dest_input.timed_state_mutex.try_lock_for(Milliseconds{16})) {
           if (d.source_input.tes.text == d.dest_input.tes.text)
@@ -119,16 +119,16 @@ void TheracConfigWidget::verify_floats() {
   
 
 
-void TheracConfigWidget::floatify() {
+void TheracConsoleWidget::floatify() {
   double x = ParseOpt<double>(tes.text).value_or(0.0);
   tes.text = U"{:.7f}"_fmt(x);
 }
-void TheracConfigWidget::enforce_int() {
+void TheracConsoleWidget::enforce_int() {
   uint32_t x = ParseOpt<uint32_t>(tes.text).value_or(0);
   tes.text = U"{}"_fmt(x);
 }
 
-void TheracConfigWidget::mangle() {
+void TheracConsoleWidget::mangle() {
     std::unique_lock<std::timed_mutex> sm{timed_state_mutex};
     std::unique_lock<std::shared_mutex> jm{jump_mutex,std::defer_lock};
     std::unique_lock<std::shared_mutex> am{autofill_mutex,std::defer_lock};
@@ -150,7 +150,7 @@ void TheracConfigWidget::mangle() {
                 U"{:.7f}"_fmt(0.0) == tes.text && am.try_lock() && should_autofill){ 
                 am.unlock();
                 tes.text =
-                    std::get<TheracConfigFloatDest *>(my_data)->source_input.tes.text;
+                    std::get<TheracConsoleFloatDest *>(my_data)->source_input.tes.text;
                 
                 if (next_field != nullptr && next_field->text_field_type == FloatDest) {
                     if(amn.try_lock()) {
@@ -291,7 +291,7 @@ void TheracConfigWidget::mangle() {
       
   }
 }
-thsAdapter::BeamType TheracConfigWidget::translateBeamType() {
+thsAdapter::BeamType TheracConsoleWidget::translateBeamType() {
     auto btf = dynamic_widgets.value()[BEAMTYPE_FIELD];
     std::unique_lock<std::timed_mutex> btfsm{btf->timed_state_mutex,std::defer_lock};
     if(btfsm.try_lock_for(Milliseconds{16})) {
@@ -304,7 +304,7 @@ thsAdapter::BeamType TheracConfigWidget::translateBeamType() {
         }
     }
 }
-thsAdapter::CollimatorPosition TheracConfigWidget::translateColPos() {
+thsAdapter::CollimatorPosition TheracConsoleWidget::translateColPos() {
     auto bt = translateBeamType();
     switch(bt) {
     case thsAdapter::_CheekyPadding:
@@ -319,7 +319,7 @@ thsAdapter::CollimatorPosition TheracConfigWidget::translateColPos() {
         break;
     }
 }
-int TheracConfigWidget::getBeamEnergy() {
+int TheracConsoleWidget::getBeamEnergy() {
     auto ben = dynamic_widgets.value()[BEAM_ENERGY_FIELD];
     std::unique_lock<std::timed_mutex> bensm{ben->timed_state_mutex,std::defer_lock};
     if(bensm.try_lock_for(Milliseconds{500}))
@@ -328,7 +328,7 @@ int TheracConfigWidget::getBeamEnergy() {
         return 25000;
 }
 
-bool TheracConfigWidget::verifyInputComplete() {
+bool TheracConsoleWidget::verifyInputComplete() {
     for (auto [l,w]: dynamic_widgets.value()){
         std::unique_lock<std::timed_mutex> wsm{w->timed_state_mutex,std::defer_lock};
         if(wsm.try_lock_for(Milliseconds{16})) {
@@ -356,16 +356,16 @@ bool TheracConfigWidget::verifyInputComplete() {
     return true;
 }
 
-void TheracConfigWidget::MALFUNCTION(int num) {
+void TheracConsoleWidget::MALFUNCTION(int num) {
     auto window_size = System::GetCurrentMonitor().fullscreenResolution;
 
     auto malfunction_override = std::make_unique<std::function<void()>>([&,window_size,num] () -> void {
         TextEditState _tes;
 
         _tes.text = U"MALFUNCTION {:d}"_fmt(num);
-        HashTable<String, TheracTextType> dummy_types{{_tes.text,TheracTextType::Const}};
-        TheracConfigWidget dummy_w(_tes.text,Point{},grid,_tes,dummy_types,tsa,screen_drawing_mutex,overrides,fat_font);
-        mine::UnfriendlyTextBox::TextBoxAt(dummy_w,
+        HashTable<String, TheracConsoleWidgetType> dummy_types{{_tes.text,Const}};
+        TheracConsoleWidget dummy_w(_tes.text,Point{},grid,_tes,dummy_types,tsa,screen_drawing_mutex,overrides,fat_font);
+        TextBoxAt(dummy_w,
             _tes, Vec2{window_size.x/2, window_size.y/2},
             window_size.x/3, 80, false, fat_font, Palette::Red,
             window_size.y/4);
@@ -376,17 +376,17 @@ void TheracConfigWidget::MALFUNCTION(int num) {
     overrides.insert(std::move(malfunction_override));
     sdm.unlock();
 }
-TheracConfig::TheracConfig(FilePath p) {
+TheracConsole::TheracConsole(FilePath p) {
   widget_config_filepath = p;
   load_ui_widgets();
 }
-TheracConfig::TheracConfig() { load_ui_widgets(); }
-void TheracConfig::save_ui_widgets() {
+TheracConsole::TheracConsole() { load_ui_widgets(); }
+void TheracConsole::save_ui_widgets() {
   auto ui_widgets_ = ui_widgets.parallel_map(
-      [](Array<std::pair<String, TheracTextType>> v)
-          -> Array<std::pair<std::string, TheracTextType>> {
-        return v.map([](std::pair<String, TheracTextType> v_) {
-          return std::pair<std::string, TheracTextType>{
+      [](Array<std::pair<String, TheracConsoleWidgetType>> v)
+          -> Array<std::pair<std::string, TheracConsoleWidgetType>> {
+        return v.map([](std::pair<String, TheracConsoleWidgetType> v_) {
+          return std::pair<std::string, TheracConsoleWidgetType>{
               std::get<0>(v_).toUTF8(), std::get<1>(v_)};
         });
       });
@@ -395,19 +395,20 @@ void TheracConfig::save_ui_widgets() {
   w_ui_widgets.writeUTF8(ok4.dump(4));
   w_ui_widgets.close();
 }
-void TheracConfig::load_ui_widgets() {
+void TheracConsole::load_ui_widgets() {
 
   TextReader r_therac_ui{widget_config_filepath};
-  Array<Array<std::pair<std::string, TheracTextType>>> widgets_u8 =
+  Array<Array<std::pair<std::string, TheracConsoleWidgetType>>> widgets_u8 =
       nlohmann::json::parse(r_therac_ui.readAll().toUTF8())[0];
   ui_widgets = widgets_u8.parallel_map(
-      [](auto v) -> Array<std::pair<String, TheracTextType>> {
+      [](auto v) -> Array<std::pair<String, TheracConsoleWidgetType>> {
         return v.map([](auto v_) {
-          return std::pair<String, TheracTextType>{
+          return std::pair<String, TheracConsoleWidgetType>{
               Unicode::FromUTF8(std::get<0>(v_)), std::get<1>(v_)};
         });
       });
   r_therac_ui.close();
 }
 
-} // namespace TheracConfig
+} // namespace GAME::Minigame::TheracSimulator::Console
+

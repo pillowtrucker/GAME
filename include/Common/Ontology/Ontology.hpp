@@ -1,7 +1,7 @@
 #pragma once
-#include <entt/entt.hpp>
-#include <Siv3D.hpp>
-namespace GammeOntology {
+#include "entt/entt.hpp"
+#include "OpenSiv3D/Siv3D/include/Siv3D.hpp"
+namespace GAME::Common::Ontology {
 // eg wall, floor, every static tile
 struct Fungible {
   Array<std::variant<std::monostate, Vec2, Float3>>

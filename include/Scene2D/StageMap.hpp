@@ -1,6 +1,7 @@
 #pragma once
 #include <Siv3D.hpp>
 #include <tileson/tileson.hpp>
+namespace GAME::Scene2D {
 class StageMap {
 public:
   int32 map_tile_size_x;
@@ -15,3 +16,4 @@ public:
 private:
   Texture m_base;
 };
+} // namespace GAME::Scene2D

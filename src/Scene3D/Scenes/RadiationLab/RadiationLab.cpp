@@ -1,11 +1,11 @@
-#include "Therac3DScene.h"
+#include "Scene3D/Scenes/RadiationLab/RadiationLab.hpp"
 #include "OpenSiv3D/Siv3D/src/Siv3D/Common/Siv3DEngine.hpp"
 #include <OpenSiv3D/Siv3D/src/Siv3D/System/ISystem.hpp>
-#include <Siv3D.hpp>
-#include <Siv3D/EngineLog.hpp>
-#include <Siv3D/Error.hpp>
+#include "OpenSiv3D/Siv3D/include/Siv3D.hpp"
+#include "OpenSiv3D/Siv3D/include/Siv3D/EngineLog.hpp"
+#include "OpenSiv3D/Siv3D/include/Siv3D/Error.hpp"
 #include <entt/entt.hpp>
-namespace t3d {
+namespace GAME::Scene3D::RadiationLab {
 
 // Engine has to be started manually if Siv3D doesn't control main()
 void Main() {
@@ -13,10 +13,10 @@ void Main() {
   SIV3D_ENGINE(System)->init();
 
   Console << Siv3DEngine::isActive();
-  Therac3DScene();
+  RadiationLab();
 }
 
-void Therac3DScene() {
+void RadiationLab() {
 
   const ColorF backgroundColor = ColorF{0.4, 0.6, 0.8}.removeSRGBCurve();
   const Mesh groundPlane{MeshData::OneSidedPlane(2000, {400, 400})};

@@ -1,5 +1,6 @@
 #include <Scene2D/StageMap.hpp>
 #include <Siv3D.hpp>
+namespace GAME::Scene2D {
 StageMap::StageMap(String path, tson::Vector2i tileset_dimensions,
                    tson::Vector2i tile_dimensions)
     : m_base{path} {
@@ -15,3 +16,4 @@ TextureRegion StageMap::get(int32 tileIndex) const {
   const int32 y = ((tileAdjusted) / (map_tileset_x)) * map_tile_size_y;
   return m_base(x, y, map_tile_size_x);
 }
+} // namespace GAME::Scene2D

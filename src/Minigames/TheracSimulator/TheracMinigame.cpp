@@ -1,12 +1,15 @@
-#include "TheracConfig.h"
-#include "TheracSimulatorAdapter.hpp"
-#include "UnfriendlyTextBox.h"
+#include "Minigames/TheracSimulator/TheracMinigame.hpp"
+#include "Minigames/TheracSimulator/TextBox.hpp"
+#include "Plugins/TheracSimulatorAdapter.hpp"
+#include "Minigames/TheracSimulator/TheracConsole.hpp"
+#include "OpenSiv3D/Siv3D/include/Siv3D.hpp"
 #include "marl/defer.h"
 #include "marl/event.h"
 #include "marl/scheduler.h"
-#include "marl/waitgroup.h"
-#include <Siv3D.hpp>
-#include <future>
+
+namespace GAME::Minigames::TheracSimulator {
+namespace tc = GAME::Minigames::TheracSimulator::Console;
+namespace thsAdapter = GAME::Plugins::TheracSimulatorAdapter;
 void TheracMinigame() {
   marl::Scheduler scheduler(marl::Scheduler::Config::allCores());
   scheduler.bind();
@@ -47,18 +50,18 @@ void TheracMinigame() {
   Window::Resize(mms);
   Window::Maximize();
   Scene::SetBackground(background_colour);
-  namespace tc = TheracConfig;
 
-  tc::TheracConfig the_tc{};
-  Array<Array<std::pair<String, tc::TheracTextType>>> ui_widgets;
+
+  tc::TheracConsole the_tc{};
+  Array<Array<std::pair<String, tc::TheracConsoleWidgetType>>> ui_widgets;
 
   ui_widgets = the_tc.ui_widgets;
-  HashTable<String, tc::TheracTextType> widget_types;
+  HashTable<String, tc::TheracConsoleWidgetType> widget_types;
 
   ui_widgets.each([&grid, &widget_types](
-                      Array<std::pair<String, tc::TheracTextType>> row) {
+                      Array<std::pair<String, tc::TheracConsoleWidgetType>> row) {
     auto label_row =
-        row.map([&widget_types](std::pair<String, tc::TheracTextType> cell) {
+        row.map([&widget_types](std::pair<String, tc::TheracConsoleWidgetType> cell) {
           widget_types.insert(cell);
           return cell.first;
         });
@@ -69,7 +72,7 @@ void TheracMinigame() {
 
   auto tsa = std::make_shared<thsAdapter::TheracSimulatorAdapter>();
   auto screen_drawing_mutex = std::make_shared<std::mutex>();
-  HashTable<String, tc::TheracConfigWidget *> dynamic_widgets;
+  HashTable<String, tc::TheracConsoleWidget *> dynamic_widgets;
   auto overrides = phmap::parallel_node_hash_set<std::unique_ptr<std::function<void()>>>();
   
   //  Array<tc::TheracConfigWidget*> para_widget_array; // this approach
@@ -79,8 +82,8 @@ void TheracMinigame() {
     if (v.text.starts_with(U"PL")) {
       auto name = v.text;
       TextEditState tes;
-      tc::TheracConfigWidget *thc =
-          new tc::TheracConfigWidget{name, i, grid, tes, widget_types, tsa,screen_drawing_mutex,overrides,fat_font};
+      tc::TheracConsoleWidget *thc =
+          new tc::TheracConsoleWidget{name, i, grid, tes, widget_types, tsa,screen_drawing_mutex,overrides,fat_font};
       dynamic_widgets.insert({name, thc});
       grid.setTextColor(i.y, i.x, transparent);
       grid.setBackgroundColor(i.y, i.x, transparent);
@@ -107,10 +110,10 @@ void TheracMinigame() {
       grid.items().each_index([=,&dynamic_widgets,
                              &evs](auto i, auto v) {
       if (v.text.starts_with(U"PL")) {
-        tc::TheracConfigWidget &w = *dynamic_widgets[v.text];
+        tc::TheracConsoleWidget &w = *dynamic_widgets[v.text];
         {
             std::lock_guard<std::mutex> sdm{*screen_drawing_mutex};
-            mine::UnfriendlyTextBox::TextBox(w,
+            tc::TextBox(w,
                 w.tes, Vec2{i.x * column_width, i.y * actual_row_height},
                 column_width, w.max_chars, w.enabled, _myMonoFont, background_colour,
                 actual_row_height);
@@ -161,3 +164,4 @@ void TheracMinigame() {
       }
   }
 }
+} // namespace GAME::Minigames

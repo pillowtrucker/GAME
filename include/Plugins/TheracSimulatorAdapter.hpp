@@ -2,8 +2,8 @@
 #include <HsFFI.h>
 #include <string>
 #include "hstherac25/dist-newstyle/build/x86_64-linux/ghc-9.8.1/hstherac25-0.1.0.0/build/HsTherac25_stub.h"
-#include <Siv3D.hpp>
-namespace thsAdapter {
+#include "OpenSiv3D/Siv3D/include/Siv3D.hpp"
+namespace GAME::Plugins::TheracSimulatorAdapter {
 
 enum ExtCallType {
   CheekyPadding,

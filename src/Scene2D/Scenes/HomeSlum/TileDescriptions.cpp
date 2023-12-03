@@ -1,7 +1,7 @@
 #include "OpenSiv3D/Siv3D/src/ThirdParty/nlohmann/json.hpp"
-#include <Scene2D/TileDescriptions.hpp>
+#include <Scene2D/Scenes/HomeSlum/TileDescriptions.hpp>
 
-namespace scene2d {
+namespace GAME::Scene2D::Scenes::HomeSlum {
 void write_tile_descriptions(HashTable<String,String> tile_descriptions) {
 std::map<std::string,std::string> ok;
   
