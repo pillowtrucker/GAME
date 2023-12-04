@@ -30,7 +30,7 @@ void HomeSlum() {
   auto stage1tilespath =
       String{stage1->getTilesets()[0].getFullImagePath().generic_u32string()};
 
-  StageMap stage1map{U"resources/{}"_fmt(stage1tilespath), stage1_tileset_size,
+  StageMap stage1map{U"resources/stage1/{}"_fmt(stage1tilespath), stage1_tileset_size,
                      stage1_tile_size};
   namespace gq = GAME::Common::Ontology;
   auto stage1tileset = stage1->getTilesets()[0];

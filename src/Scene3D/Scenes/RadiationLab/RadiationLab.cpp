@@ -11,7 +11,6 @@ namespace GAME::Scene3D::RadiationLab {
 void Main() {
   Siv3DEngine engine;
   SIV3D_ENGINE(System)->init();
-
   Console << Siv3DEngine::isActive();
   RadiationLab();
 }
@@ -33,6 +32,7 @@ void RadiationLab() {
                        Vec3{0, 3, -16}};
   const Texture groundTexture{U"resources/PolyPackBoats.png",
                               TextureDesc::MippedSRGB};
+  
   int fps;
   while (System::Update()) {
     ClearPrint();
