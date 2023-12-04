@@ -9,3 +9,4 @@ build
 *.o
 a.out
 *.#*
+TheracSimulatorAdapter.hpp
