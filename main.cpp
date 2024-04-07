@@ -3,6 +3,7 @@
 #include "Scene2D/Scenes/HomeSlum/HomeSlum.hpp"
 #include "Scene3D/Scenes/RadiationLab/RadiationLab.hpp"
 #include "LDtkLoader/include/LDtkLoader/Project.hpp"
+
 void Main() {
 
   int32 fps;
@@ -21,15 +22,15 @@ void Main() {
   std::cout << world.iid << std::endl;
   
   
-  auto const & level0 = world.getLevel("Level_0");
+  //  auto const & level0 = world.getLevel("Level_0");
 
 
-  auto const & bg_layer = level0.getLayer("Static_Tile_Ents");
+  //  auto const & bg_layer = level0.getLayer("Static_Tile_Ents");
 
 //  std::cout << bg_layer.getTileset().path << std::endl;
-  for (const auto& tile : bg_layer.allTiles()) {
+//  for (const auto& tile : bg_layer.allTiles()) {
 //      std::cout << tile.tileId << std::endl;
-  }
+//  }
         
   while (System::Update()) {
       ClearPrint();

@@ -1,2 +1,2 @@
 CompileFlags:
-  Add: [-ferror-limit=0, -Wshadow-all]
+  Add: [-ferror-limit=0, -Wall,-Wextra, -Wpedantic]
