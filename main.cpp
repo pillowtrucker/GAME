@@ -26,9 +26,9 @@ void Main() {
 
   auto const & bg_layer = level0.getLayer("Static_Tile_Ents");
 
-  std::cout << bg_layer.getTileset().path << std::endl;
+//  std::cout << bg_layer.getTileset().path << std::endl;
   for (const auto& tile : bg_layer.allTiles()) {
-      std::cout << tile.tileId << std::endl;
+//      std::cout << tile.tileId << std::endl;
   }
         
   while (System::Update()) {
