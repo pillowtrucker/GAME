@@ -10,3 +10,5 @@ build
 a.out
 *.#*
 TheracSimulatorAdapter.hpp
+.direnv
+result

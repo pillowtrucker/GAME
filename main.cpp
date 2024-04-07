@@ -45,6 +45,7 @@ void Main() {
       goto Therac2D;
     fps = Profiler::FPS();
     Print(fps);
+    
   }
 
 
