@@ -52,7 +52,7 @@ public:
     SimpleTable & grid;
     String name;
     uint32_t max_chars = 200;
-    std::timed_mutex timed_state_mutex;
+    std::shared_timed_mutex timed_state_mutex;
     TheracConsoleWidget * prev_field;
     void finish_setup();
     void mangle();
@@ -87,5 +87,6 @@ public:
     Array<Array<std::pair<String, TheracConsoleWidgetType>>> ui_widgets;
 private:
     FilePath widget_config_filepath = U"resources/stage1/therac_ui.json";
+
 };
 } // namespace GAME::Minigames::TheracSimulator::Console

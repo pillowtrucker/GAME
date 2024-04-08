@@ -129,7 +129,7 @@ void TheracConsoleWidget::enforce_int() {
 }
 
 void TheracConsoleWidget::mangle() {
-    std::unique_lock<std::timed_mutex> sm{timed_state_mutex};
+    std::unique_lock<std::shared_timed_mutex> sm{timed_state_mutex};
     std::unique_lock<std::shared_mutex> jm{jump_mutex,std::defer_lock};
     std::unique_lock<std::shared_mutex> am{autofill_mutex,std::defer_lock};
     std::unique_lock<std::shared_mutex> jmn{next_field->jump_mutex,std::defer_lock};
@@ -224,13 +224,15 @@ void TheracConsoleWidget::mangle() {
             overrides.clear();
             sdm.unlock();
             tsa.get()->externalCallWrap(thsAdapter::ExtCallProceed);
+            tsa->reset_malfunction();
             tes.text.clear();
         } else if(tes.text == U"R") {
             
             sdm.lock();
             overrides.clear();
             sdm.unlock();
-            tsa.get()->externalCallWrap(thsAdapter::ExtCallReset);
+            tsa->externalCallWrap(thsAdapter::ExtCallReset);
+            tsa->reset_malfunction();
             tes.text.clear();
         }
      
@@ -253,7 +255,7 @@ void TheracConsoleWidget::mangle() {
       if (enabled && tes.active) {
       if (next_field != nullptr && (keys_up[KeyTab.asUint32()] || keys_up[KeyEnter.asUint32()] || keys_up[KeyDown.asUint32()]) && jm.try_lock() && should_jump){
           jm.unlock();
-                  if(jmn.try_lock()) {
+          if(jmn.try_lock() && next_field->timed_state_mutex.try_lock_shared_for(Milliseconds{16})) {
                       
                       next_field->keys_up[KeyTab.asUint32()] = false;
                       next_field->keys_up[KeyEnter.asUint32()] = false;
@@ -262,6 +264,7 @@ void TheracConsoleWidget::mangle() {
                       next_field->should_jump = false;
                       tes.active = false;
                       jmn.unlock();
+                      next_field->timed_state_mutex.unlock_shared();
                   }
       } else { if(jm.owns_lock()) {jm.unlock();};
           if (prev_field != nullptr && keys_up[KeyUp.asUint32()] && jm.try_lock() && should_jump){ 
@@ -274,11 +277,12 @@ void TheracConsoleWidget::mangle() {
                   tes.text.clear();
               } 
 
-                  if(jmp.try_lock()) {
+              if(jmp.try_lock() && prev_field->timed_state_mutex.try_lock_shared_for(Milliseconds{16})) {
                       tes.active = false;
                       prev_field->keys_up[KeyUp.asUint32()] = false;
                       prev_field->should_jump = false;
                       prev_field->tes.active = true;
+                      prev_field->timed_state_mutex.unlock_shared();
                       jmp.unlock();
                   }
 
@@ -293,7 +297,7 @@ void TheracConsoleWidget::mangle() {
 }
 thsAdapter::BeamType TheracConsoleWidget::translateBeamType() {
     auto btf = dynamic_widgets.value()[BEAMTYPE_FIELD];
-    std::unique_lock<std::timed_mutex> btfsm{btf->timed_state_mutex,std::defer_lock};
+    std::unique_lock<std::shared_timed_mutex> btfsm{btf->timed_state_mutex,std::defer_lock};
     if(btfsm.try_lock_for(Milliseconds{16})) {
         if(btf->tes.text == U"X") {
             return thsAdapter::BeamTypeXRay;
@@ -321,7 +325,7 @@ thsAdapter::CollimatorPosition TheracConsoleWidget::translateColPos() {
 }
 int TheracConsoleWidget::getBeamEnergy() {
     auto ben = dynamic_widgets.value()[BEAM_ENERGY_FIELD];
-    std::unique_lock<std::timed_mutex> bensm{ben->timed_state_mutex,std::defer_lock};
+    std::unique_lock<std::shared_timed_mutex> bensm{ben->timed_state_mutex,std::defer_lock};
     if(bensm.try_lock_for(Milliseconds{500}))
         return ParseOpt<int>(ben->tes.text).value_or(25000); // good default number
     else
@@ -330,7 +334,7 @@ int TheracConsoleWidget::getBeamEnergy() {
 
 bool TheracConsoleWidget::verifyInputComplete() {
     for (auto [l,w]: dynamic_widgets.value()){
-        std::unique_lock<std::timed_mutex> wsm{w->timed_state_mutex,std::defer_lock};
+        std::unique_lock<std::shared_timed_mutex> wsm{w->timed_state_mutex,std::defer_lock};
         if(wsm.try_lock_for(Milliseconds{16})) {
             auto t = w->text_field_type;
             auto te = w->tes.text;
@@ -357,6 +361,10 @@ bool TheracConsoleWidget::verifyInputComplete() {
 }
 
 void TheracConsoleWidget::MALFUNCTION(int num) {
+    if (tsa->check_malfunction())
+        return;
+    if (not tsa->set_malfunction())
+        return;
     auto window_size = System::GetCurrentMonitor().fullscreenResolution;
 
     auto malfunction_override = std::make_unique<std::function<void()>>([&,window_size,num] () -> void {

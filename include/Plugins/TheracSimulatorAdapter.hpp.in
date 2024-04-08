@@ -45,12 +45,16 @@ class TheracSimulatorAdapter {
                           BeamType beam_type = BeamTypeUndefined, CollimatorPosition collimator_position = CollimatorPositionUndefined,
                           HsInt beam_energy = 0);
     String requestStateInfo(StateInfoRequest state_info_request);
-    
+    bool check_malfunction();
+    bool set_malfunction();
+    bool reset_malfunction();
 
 private:
     void hs_init(String args = U"-threaded +RTS -N -RTS");
 	void hs_exit();
     HsStablePtr startMachine(void);
     void * wrapped_comms;
+    bool malfunctioning = false;
+    std::shared_mutex malfunctioning_mutex;
 };
 } // namespace thsAdapter
